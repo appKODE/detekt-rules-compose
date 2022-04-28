@@ -1,0 +1,15 @@
+[versions]
+detekt = "1.20.0"
+koTest = "5.2.3"
+ktlint = "0.45.2"
+
+[libraries]
+detekt-api = { module = "io.gitlab.arturbosch.detekt:detekt-api", version.ref = "detekt" }
+detekt-test = { module = "io.gitlab.arturbosch.detekt:detekt-test", version.ref = "detekt" }
+kotest-junit-runner = { module = "io.kotest:kotest-runner-junit5", version.ref = "koTest" }
+kotest-assertions-core = { module = "io.kotest:kotest-assertions-core", version.ref = "koTest" }
+kotest-property = { module = "io.kotest:kotest-property", version.ref = "koTest" }
+ktlint = { module = "com.pinterest:ktlint", version.ref = "ktlint" }
+
+[bundles]
+koTest = [ "kotest-junit-runner", "kotest-assertions-core", "kotest-property" ]
