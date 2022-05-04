@@ -1,0 +1,16 @@
+compose:
+  active: true
+  ModifierHeightWithText:
+    active: true
+  ReusedModifierInstance:
+    active: true
+  PublicComposablePreview:
+    active: true
+  ModifierArgumentPosition:
+    active: true
+  ModifierParameterPosition:
+    active: true
+  ComposableEventParameterNaming:
+    active: false
+  UnnecessaryEventHandlerParameter:
+    active: true
