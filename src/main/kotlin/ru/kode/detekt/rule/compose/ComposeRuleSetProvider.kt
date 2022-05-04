@@ -12,7 +12,7 @@ class ComposeRuleSetProvider : RuleSetProvider {
       ruleSetId,
       listOf(
         ModifierHeightWithText(config),
-        ModifierOnWrongLevel(config),
+        ReusedModifierInstance(config),
         PublicComposablePreview(config),
         ModifierArgumentPosition(config),
         ModifierParameterPosition(config),

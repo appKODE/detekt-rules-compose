@@ -19,7 +19,7 @@ import org.jetbrains.kotlin.psi.KtReferenceExpression
 import org.jetbrains.kotlin.psi.psiUtil.getChildrenOfType
 
 /**
- * Reports errors in using modifier on wrong level of composable hierarchy, for example:
+ * Reports errors when reusing the modifier instance on a wrong level of composable hierarchy, for example:
  *
  * ```kotlin
  * @Composable
@@ -43,7 +43,7 @@ import org.jetbrains.kotlin.psi.psiUtil.getChildrenOfType
  * }
  * ```
  */
-class ModifierOnWrongLevel(config: Config = Config.empty) : Rule(config) {
+class ReusedModifierInstance(config: Config = Config.empty) : Rule(config) {
   override val issue = Issue(
     javaClass.simpleName,
     Severity.Defect,

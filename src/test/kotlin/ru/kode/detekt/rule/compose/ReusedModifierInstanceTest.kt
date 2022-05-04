@@ -5,7 +5,7 @@ import io.kotest.core.spec.style.ShouldSpec
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
 
-class ModifierOnWrongLevelTest : ShouldSpec({
+class ReusedModifierInstanceTest : ShouldSpec({
   should("error on wrong modifier on grand-children") {
     // language=kotlin
     val code = """
@@ -26,7 +26,7 @@ class ModifierOnWrongLevelTest : ShouldSpec({
       }
     """.trimIndent()
 
-    val findings = ModifierOnWrongLevel().lint(code)
+    val findings = ReusedModifierInstance().lint(code)
 
     findings shouldHaveSize 1
   }
@@ -46,7 +46,7 @@ class ModifierOnWrongLevelTest : ShouldSpec({
       }
     """.trimIndent()
 
-    val findings = ModifierOnWrongLevel().lint(code)
+    val findings = ReusedModifierInstance().lint(code)
 
     findings shouldHaveSize 1
   }
@@ -85,7 +85,7 @@ internal fun SummaryRow(
 }
     """.trimIndent()
 
-    val findings = ModifierOnWrongLevel().lint(code)
+    val findings = ReusedModifierInstance().lint(code)
 
     findings.shouldBeEmpty()
   }
@@ -111,7 +111,7 @@ internal fun CollapsableHeader(
 }
     """.trimIndent()
 
-    val findings = ModifierOnWrongLevel().lint(code)
+    val findings = ReusedModifierInstance().lint(code)
 
     findings shouldHaveSize 1
   }
@@ -137,7 +137,7 @@ internal fun CollapsableHeader(
 }
     """.trimIndent()
 
-    val findings = ModifierOnWrongLevel().lint(code)
+    val findings = ReusedModifierInstance().lint(code)
 
     findings.shouldBeEmpty()
   }
