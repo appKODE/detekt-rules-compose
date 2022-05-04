@@ -5,7 +5,7 @@ import io.gitlab.arturbosch.detekt.api.RuleSet
 import io.gitlab.arturbosch.detekt.api.RuleSetProvider
 
 class ComposeRuleSetProvider : RuleSetProvider {
-  override val ruleSetId = "kode"
+  override val ruleSetId = "compose"
 
   override fun instance(config: Config): RuleSet {
     return RuleSet(
