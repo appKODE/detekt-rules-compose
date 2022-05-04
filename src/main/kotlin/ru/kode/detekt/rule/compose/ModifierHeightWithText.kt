@@ -22,7 +22,7 @@ import org.jetbrains.kotlin.psi.psiUtil.getChildrenOfType
 /**
  * Reports usage of height modifier in composable functions with text.
  * Text is measured in sp and so its contents can change depending on the system setting.
- * Therefore it is not safe to use fixed height on containers with Text: this will lead
+ * Therefore, it is not safe to use fixed height on containers with Text: this will lead
  * to clipped text in some cases.
  *
  * This check suggests replacing this code:
