@@ -6,9 +6,9 @@ import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
 
 class ModifierArgumentPositionTest : ShouldSpec({
-    should("report when incorrect position with named invocation") {
-        // language=kotlin
-        val code = """
+  should("report when incorrect position with named invocation") {
+    // language=kotlin
+    val code = """
       @Composable
       fun Test() {
         Row(
@@ -25,16 +25,16 @@ class ModifierArgumentPositionTest : ShouldSpec({
           )
         }
     }
-        """.trimIndent()
+    """.trimIndent()
 
-        val findings = ModifierArgumentPosition().lint(code)
+    val findings = ModifierArgumentPosition().lint(code)
 
-        findings shouldHaveSize 1
-    }
+    findings shouldHaveSize 1
+  }
 
-    should("report with named hierarchical invocation") {
-        // language=kotlin
-        val code = """
+  should("report with named hierarchical invocation") {
+    // language=kotlin
+    val code = """
       @Composable
       fun Test() {
         Row(
@@ -49,16 +49,16 @@ class ModifierArgumentPositionTest : ShouldSpec({
           )
         }
     }
-        """.trimIndent()
+    """.trimIndent()
 
-        val findings = ModifierArgumentPosition().lint(code)
+    val findings = ModifierArgumentPosition().lint(code)
 
-        findings shouldHaveSize 1
-    }
+    findings shouldHaveSize 1
+  }
 
-    should("not report when in first position") {
-        // language=kotlin
-        val code = """
+  should("not report when in first position") {
+    // language=kotlin
+    val code = """
       @Composable
       fun Test() {
         Row(
@@ -74,16 +74,16 @@ class ModifierArgumentPositionTest : ShouldSpec({
           )
         }
     }
-        """.trimIndent()
+    """.trimIndent()
 
-        val findings = ModifierArgumentPosition().lint(code)
+    val findings = ModifierArgumentPosition().lint(code)
 
-        findings.shouldBeEmpty()
-    }
+    findings.shouldBeEmpty()
+  }
 
-    should("not report not named invocations") {
-        // language=kotlin
-        val code = """
+  should("not report not named invocations") {
+    // language=kotlin
+    val code = """
       @Composable
       fun Test() {
         Row(
@@ -99,10 +99,10 @@ class ModifierArgumentPositionTest : ShouldSpec({
           )
         }
     }
-        """.trimIndent()
+    """.trimIndent()
 
-        val findings = ModifierArgumentPosition().lint(code)
+    val findings = ModifierArgumentPosition().lint(code)
 
-        findings.shouldBeEmpty()
-    }
+    findings.shouldBeEmpty()
+  }
 })

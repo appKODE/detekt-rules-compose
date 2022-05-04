@@ -35,43 +35,43 @@ import java.util.IdentityHashMap
  * ```
  */
 class ModifierParameterPosition(config: Config = Config.empty) : Rule(config) {
-    override val issue = Issue(
-        javaClass.simpleName,
-        Severity.Defect,
-        "Reports incorrect modifier parameter position",
-        Debt.FIVE_MINS
-    )
+  override val issue = Issue(
+    javaClass.simpleName,
+    Severity.Defect,
+    "Reports incorrect modifier parameter position",
+    Debt.FIVE_MINS
+  )
 
-    private val incorrectPositions = Collections.newSetFromMap(IdentityHashMap<KtNamedFunction, Boolean>())
+  private val incorrectPositions = Collections.newSetFromMap(IdentityHashMap<KtNamedFunction, Boolean>())
 
-    override fun visitNamedFunction(function: KtNamedFunction) {
-        if (function.hasAnnotation("Composable")) {
-            checkFunction(function)
-        }
+  override fun visitNamedFunction(function: KtNamedFunction) {
+    if (function.hasAnnotation("Composable")) {
+      checkFunction(function)
     }
+  }
 
-    private fun checkFunction(function: KtNamedFunction) {
-        val position = function.valueParameters.indexOfFirst { it.isModifierParameter() }
-        if (position > 0) {
-            incorrectPositions.add(function)
-        }
+  private fun checkFunction(function: KtNamedFunction) {
+    val position = function.valueParameters.indexOfFirst { it.isModifierParameter() }
+    if (position > 0) {
+      incorrectPositions.add(function)
     }
+  }
 
-    override fun preVisit(root: KtFile) {
-        incorrectPositions.clear()
+  override fun preVisit(root: KtFile) {
+    incorrectPositions.clear()
+  }
+
+  override fun postVisit(root: KtFile) {
+    incorrectPositions.forEach { node ->
+      report(
+        CodeSmell(
+          issue,
+          Entity.from(node, Location.from(node.valueParameters.first { it.isModifierParameter() })),
+          "Modifier parameter of composable functions must always be first"
+        )
+      )
     }
+  }
 
-    override fun postVisit(root: KtFile) {
-        incorrectPositions.forEach { node ->
-            report(
-                CodeSmell(
-                    issue,
-                    Entity.from(node, Location.from(node.valueParameters.first { it.isModifierParameter() })),
-                    "Modifier parameter of composable functions must always be first"
-                )
-            )
-        }
-    }
-
-    private fun KtParameter.isModifierParameter() = identifierName() == "modifier"
+  private fun KtParameter.isModifierParameter() = identifierName() == "modifier"
 }

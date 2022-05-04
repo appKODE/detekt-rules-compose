@@ -1,7 +1,9 @@
 [versions]
 detekt = "1.20.0"
 koTest = "5.2.3"
-ktlint = "0.45.2"
+ktlint = "0.43.2"
+spotless = "6.5.2"
+dokka = "1.5.31"
 
 [libraries]
 detekt-api = { module = "io.gitlab.arturbosch.detekt:detekt-api", version.ref = "detekt" }
@@ -13,3 +15,7 @@ ktlint = { module = "com.pinterest:ktlint", version.ref = "ktlint" }
 
 [bundles]
 koTest = [ "kotest-junit-runner", "kotest-assertions-core", "kotest-property" ]
+
+[plugins]
+spotless = { id = "com.diffplug.spotless", version.ref = "spotless" }
+dokka = { id = "org.jetbrains.dokka", version.ref = "dokka" }

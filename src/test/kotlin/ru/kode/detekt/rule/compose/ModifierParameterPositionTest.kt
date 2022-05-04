@@ -6,9 +6,9 @@ import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
 
 class ModifierParameterPositionTest : ShouldSpec({
-    should("report when incorrect position") {
-        // language=kotlin
-        val code = """
+  should("report when incorrect position") {
+    // language=kotlin
+    val code = """
       @Composable
       fun Test(
           verticalAlignment = Alignment.CenterVertically,
@@ -16,16 +16,16 @@ class ModifierParameterPositionTest : ShouldSpec({
       ) {
           Text(text = props.title)
       }
-        """.trimIndent()
+    """.trimIndent()
 
-        val findings = ModifierParameterPosition().lint(code)
+    val findings = ModifierParameterPosition().lint(code)
 
-        findings shouldHaveSize 1
-    }
+    findings shouldHaveSize 1
+  }
 
-    should("not report when in first position") {
-        // language=kotlin
-        val code = """
+  should("not report when in first position") {
+    // language=kotlin
+    val code = """
       @Composable
       fun Test(
           modifier = modifier.height(24.dp),
@@ -33,10 +33,10 @@ class ModifierParameterPositionTest : ShouldSpec({
       ) {
           Text(text = props.title)
       }
-        """.trimIndent()
+    """.trimIndent()
 
-        val findings = ModifierParameterPosition().lint(code)
+    val findings = ModifierParameterPosition().lint(code)
 
-        findings.shouldBeEmpty()
-    }
+    findings.shouldBeEmpty()
+  }
 })

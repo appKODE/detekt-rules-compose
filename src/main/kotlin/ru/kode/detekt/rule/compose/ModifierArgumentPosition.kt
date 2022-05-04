@@ -36,50 +36,50 @@ import java.util.IdentityHashMap
  * ```
  */
 class ModifierArgumentPosition(config: Config = Config.empty) : Rule(config) {
-    override val issue = Issue(
-        javaClass.simpleName,
-        Severity.Defect,
-        "Reports incorrect modifier argument position",
-        Debt.FIVE_MINS
-    )
+  override val issue = Issue(
+    javaClass.simpleName,
+    Severity.Defect,
+    "Reports incorrect modifier argument position",
+    Debt.FIVE_MINS
+  )
 
-    private val incorrectPositions = Collections.newSetFromMap(IdentityHashMap<KtCallExpression, Boolean>())
+  private val incorrectPositions = Collections.newSetFromMap(IdentityHashMap<KtCallExpression, Boolean>())
 
-    override fun visitNamedFunction(function: KtNamedFunction) {
-        if (function.hasAnnotation("Composable")) {
-            function.bodyBlockExpression?.accept(ChildComposableFunctionCallsVisitor())
-        }
+  override fun visitNamedFunction(function: KtNamedFunction) {
+    if (function.hasAnnotation("Composable")) {
+      function.bodyBlockExpression?.accept(ChildComposableFunctionCallsVisitor())
+    }
+  }
+
+  override fun preVisit(root: KtFile) {
+    incorrectPositions.clear()
+  }
+
+  override fun postVisit(root: KtFile) {
+    incorrectPositions.forEach { node ->
+      report(
+        CodeSmell(
+          issue,
+          Entity.from(node, Location.from(node.valueArguments.first { it.isModifierArgument() })),
+          "Modifier argument of composable function must always be first"
+        )
+      )
+    }
+  }
+
+  inner class ChildComposableFunctionCallsVisitor : DetektVisitor() {
+    override fun visitCallExpression(expression: KtCallExpression) {
+      checkCallExpression(expression)
+      super.visitCallExpression(expression)
     }
 
-    override fun preVisit(root: KtFile) {
-        incorrectPositions.clear()
+    private fun checkCallExpression(expression: KtCallExpression) {
+      val position = expression.valueArguments.indexOfFirst { it.isModifierArgument() }
+      if (position > 0) {
+        incorrectPositions.add(expression)
+      }
     }
+  }
 
-    override fun postVisit(root: KtFile) {
-        incorrectPositions.forEach { node ->
-            report(
-                CodeSmell(
-                    issue,
-                    Entity.from(node, Location.from(node.valueArguments.first { it.isModifierArgument() })),
-                    "Modifier argument of composable function must always be first"
-                )
-            )
-        }
-    }
-
-    inner class ChildComposableFunctionCallsVisitor : DetektVisitor() {
-        override fun visitCallExpression(expression: KtCallExpression) {
-            checkCallExpression(expression)
-            super.visitCallExpression(expression)
-        }
-
-        private fun checkCallExpression(expression: KtCallExpression) {
-            val position = expression.valueArguments.indexOfFirst { it.isModifierArgument() }
-            if (position > 0) {
-                incorrectPositions.add(expression)
-            }
-        }
-    }
-
-    private fun KtValueArgument.isModifierArgument() = getArgumentName()?.text == "modifier"
+  private fun KtValueArgument.isModifierArgument() = getArgumentName()?.text == "modifier"
 }

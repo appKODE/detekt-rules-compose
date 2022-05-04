@@ -44,61 +44,61 @@ import org.jetbrains.kotlin.psi.psiUtil.getChildrenOfType
  * ```
  */
 class ModifierOnWrongLevel(config: Config = Config.empty) : Rule(config) {
-    override val issue = Issue(
-        javaClass.simpleName,
-        Severity.Defect,
-        "Reports errors in using modifier on wrong level of composable hierarchy",
-        Debt.FIVE_MINS
-    )
+  override val issue = Issue(
+    javaClass.simpleName,
+    Severity.Defect,
+    "Reports errors in using modifier on wrong level of composable hierarchy",
+    Debt.FIVE_MINS
+  )
 
-    override fun visitNamedFunction(function: KtNamedFunction) {
-        if (function.hasAnnotation("Composable") && function.valueParameters.any { it.identifierName() == "modifier" }) {
-            function.bodyBlockExpression?.getChildrenOfType<KtCallExpression>()?.forEach {
-                it.accept(ChildComposableCallsVisitor())
-            }
+  override fun visitNamedFunction(function: KtNamedFunction) {
+    if (function.hasAnnotation("Composable") && function.valueParameters.any { it.identifierName() == "modifier" }) {
+      function.bodyBlockExpression?.getChildrenOfType<KtCallExpression>()?.forEach {
+        it.accept(ChildComposableCallsVisitor())
+      }
+    }
+    super.visitNamedFunction(function)
+  }
+
+  private inner class ChildComposableCallsVisitor : DetektVisitor() {
+    override fun visitCallExpression(expression: KtCallExpression) {
+      val contentLambdaExpression = expression.valueArguments.find { it.getArgumentExpression() is KtLambdaExpression }
+        ?.getArgumentExpression() as KtLambdaExpression?
+      contentLambdaExpression?.bodyExpression?.getChildrenOfType<KtCallExpression>()?.forEach {
+        it.accept(ChildrenWithModifiersVisitor())
+      }
+    }
+  }
+
+  private inner class ChildrenWithModifiersVisitor : DetektVisitor() {
+    override fun visitCallExpression(expression: KtCallExpression) {
+      val modifierArgExpression = expression.valueArguments
+        .find { it.getArgumentExpression()?.isModifierChainExpression() == true }
+        ?.getArgumentExpression()
+      if (modifierArgExpression != null) {
+        if (modifierArgExpression.text.startsWith("modifier")) {
+          reportError(expression)
         }
-        super.visitNamedFunction(function)
+      }
+      super.visitCallExpression(expression)
     }
 
-    private inner class ChildComposableCallsVisitor : DetektVisitor() {
-        override fun visitCallExpression(expression: KtCallExpression) {
-            val contentLambdaExpression = expression.valueArguments.find { it.getArgumentExpression() is KtLambdaExpression }
-                ?.getArgumentExpression() as KtLambdaExpression?
-            contentLambdaExpression?.bodyExpression?.getChildrenOfType<KtCallExpression>()?.forEach {
-                it.accept(ChildrenWithModifiersVisitor())
-            }
-        }
+    private fun KtExpression.isModifierChainExpression(): Boolean {
+      return when (this) {
+        is KtDotQualifiedExpression -> this.text.startsWith("Modifier") || this.text.startsWith("modifier")
+        is KtReferenceExpression -> this.text == "modifier"
+        else -> false
+      }
     }
 
-    private inner class ChildrenWithModifiersVisitor : DetektVisitor() {
-        override fun visitCallExpression(expression: KtCallExpression) {
-            val modifierArgExpression = expression.valueArguments
-                .find { it.getArgumentExpression()?.isModifierChainExpression() == true }
-                ?.getArgumentExpression()
-            if (modifierArgExpression != null) {
-                if (modifierArgExpression.text.startsWith("modifier")) {
-                    reportError(expression)
-                }
-            }
-            super.visitCallExpression(expression)
-        }
-
-        private fun KtExpression.isModifierChainExpression(): Boolean {
-            return when (this) {
-                is KtDotQualifiedExpression -> this.text.startsWith("Modifier") || this.text.startsWith("modifier")
-                is KtReferenceExpression -> this.text == "modifier"
-                else -> false
-            }
-        }
-
-        private fun reportError(node: KtCallExpression) {
-            report(
-                CodeSmell(
-                    issue,
-                    Entity.from(node),
-                    "Composable uses \"modifier\" on the wrong level, non-direct children should use \"Modifier\""
-                )
-            )
-        }
+    private fun reportError(node: KtCallExpression) {
+      report(
+        CodeSmell(
+          issue,
+          Entity.from(node),
+          "Composable uses \"modifier\" on the wrong level, non-direct children should use \"Modifier\""
+        )
+      )
     }
+  }
 }

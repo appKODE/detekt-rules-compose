@@ -6,9 +6,9 @@ import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
 
 class ModifierOnWrongLevelTest : ShouldSpec({
-    should("error on wrong modifier on grand-children") {
-        // language=kotlin
-        val code = """
+  should("error on wrong modifier on grand-children") {
+    // language=kotlin
+    val code = """
       @Composable
       fun Test(modifier: Modifier, value: Int) {
         Row(
@@ -24,16 +24,16 @@ class ModifierOnWrongLevelTest : ShouldSpec({
           )
         }
       }
-        """.trimIndent()
+    """.trimIndent()
 
-        val findings = ModifierOnWrongLevel().lint(code)
+    val findings = ModifierOnWrongLevel().lint(code)
 
-        findings shouldHaveSize 1
-    }
+    findings shouldHaveSize 1
+  }
 
-    should("error on wrong modifier on grand-grand-children") {
-        // language=kotlin
-        val code = """
+  should("error on wrong modifier on grand-grand-children") {
+    // language=kotlin
+    val code = """
       @Composable
       fun Test(modifier: Modifier, value: Int) {
         Row(
@@ -44,16 +44,16 @@ class ModifierOnWrongLevelTest : ShouldSpec({
           }
         }
       }
-        """.trimIndent()
+    """.trimIndent()
 
-        val findings = ModifierOnWrongLevel().lint(code)
+    val findings = ModifierOnWrongLevel().lint(code)
 
-        findings shouldHaveSize 1
-    }
+    findings shouldHaveSize 1
+  }
 
-    should("not error on modifier on direct children") {
-        // language=kotlin
-        val code = """
+  should("not error on modifier on direct children") {
+    // language=kotlin
+    val code = """
 @Composable
 internal fun SummaryRow(
   modifier: Modifier = Modifier,
@@ -83,16 +83,16 @@ internal fun SummaryRow(
     )
   }
 }
-        """.trimIndent()
+    """.trimIndent()
 
-        val findings = ModifierOnWrongLevel().lint(code)
+    val findings = ModifierOnWrongLevel().lint(code)
 
-        findings.shouldBeEmpty()
-    }
+    findings.shouldBeEmpty()
+  }
 
-    should("error on modifier without expression chain") {
-        // language=kotlin
-        val code = """
+  should("error on modifier without expression chain") {
+    // language=kotlin
+    val code = """
 @Composable
 internal fun CollapsableHeader(
   modifier: Modifier = Modifier,
@@ -109,16 +109,16 @@ internal fun CollapsableHeader(
     }
   }
 }
-        """.trimIndent()
+    """.trimIndent()
 
-        val findings = ModifierOnWrongLevel().lint(code)
+    val findings = ModifierOnWrongLevel().lint(code)
 
-        findings shouldHaveSize 1
-    }
+    findings shouldHaveSize 1
+  }
 
-    should("not error on Modifier without expression chain") {
-        // language=kotlin
-        val code = """
+  should("not error on Modifier without expression chain") {
+    // language=kotlin
+    val code = """
 @Composable
 internal fun CollapsableHeader(
   modifier: Modifier = Modifier,
@@ -135,10 +135,10 @@ internal fun CollapsableHeader(
     }
   }
 }
-        """.trimIndent()
+    """.trimIndent()
 
-        val findings = ModifierOnWrongLevel().lint(code)
+    val findings = ModifierOnWrongLevel().lint(code)
 
-        findings.shouldBeEmpty()
-    }
+    findings.shouldBeEmpty()
+  }
 })

@@ -48,74 +48,77 @@ import org.jetbrains.kotlin.psi.KtTypeReference
  * ```
  */
 class UnnecessaryEventHandlerParameter(config: Config = Config.empty) : Rule(config) {
-    override val issue = Issue(
-        javaClass.simpleName,
-        Severity.Defect,
-        "Checks for unnecessary event handler parameters",
-        Debt.FIVE_MINS
-    )
+  override val issue = Issue(
+    javaClass.simpleName,
+    Severity.Defect,
+    "Checks for unnecessary event handler parameters",
+    Debt.FIVE_MINS
+  )
 
-    override fun visitNamedFunction(function: KtNamedFunction) {
-        if (function.hasAnnotation("Composable")) {
-            val stateParameters = function.valueParameters.filter { it.isStateParameter() }
-            val eventParameters = function.valueParameters.filter { it.isEventParameter() }
-            if (stateParameters.isNotEmpty()) {
-                function.bodyExpression?.accept(UnnecessaryHandlerArgumentsVisitor(stateParameters, eventParameters))
+  override fun visitNamedFunction(function: KtNamedFunction) {
+    if (function.hasAnnotation("Composable")) {
+      val stateParameters = function.valueParameters.filter { it.isStateParameter() }
+      val eventParameters = function.valueParameters.filter { it.isEventParameter() }
+      if (stateParameters.isNotEmpty()) {
+        function.bodyExpression?.accept(UnnecessaryHandlerArgumentsVisitor(stateParameters, eventParameters))
+      }
+    }
+  }
+
+  private fun KtParameter.isStateParameter(): Boolean {
+    return !this.isEventParameter()
+  }
+
+  private fun KtParameter.isEventParameter(): Boolean {
+    val firstChild = this.children.first { it is KtTypeReference }
+    if ((firstChild as KtTypeReference).hasAnnotation("Composable")) return false
+    return firstChild.typeElement is KtFunctionType &&
+      (firstChild.typeElement as KtFunctionType).returnTypeReference?.text == "Unit"
+  }
+
+  private inner class UnnecessaryHandlerArgumentsVisitor(
+    private val stateParameters: List<KtParameter>,
+    private val eventParameters: List<KtParameter>
+  ) : DetektVisitor() {
+    private val stateParameterNames = stateParameters.map { it.name }
+
+    override fun visitCallExpression(expression: KtCallExpression) {
+      super.visitCallExpression(expression)
+      val eventParameterForCall = eventParameters.find { it.name == expression.calleeExpression?.text }
+      if (eventParameterForCall != null) {
+        expression.valueArguments.forEachIndexed { index, argument ->
+          val argumentExpression = argument.getArgumentExpression()
+          //   data -> argumentReceiverName == data
+          //   data.id -> argumentReceiverName == data
+          //   data.nested.id -> argumentReceiverName == data
+          //   data.copy() -> null
+          val argumentReceiverName = when {
+            argumentExpression is KtDotQualifiedExpression &&
+              argumentExpression.lastChild !is KtCallExpression -> {
+              argumentExpression.text.takeWhile { it != '.' }
             }
+            argumentExpression is KtNameReferenceExpression -> argument.text
+            else -> null
+          }
+          if (argumentReceiverName != null && stateParameterNames.contains(argumentReceiverName)) {
+            reportError(eventParameterForCall, argumentReceiverName, argumentIndex = index)
+          }
         }
+      }
     }
 
-    private fun KtParameter.isStateParameter(): Boolean {
-        return !this.isEventParameter()
+    private fun reportError(eventParameter: KtParameter, argumentReceiverName: String, argumentIndex: Int) {
+      val type = ((eventParameter.children.first() as KtTypeReference).typeElement as KtFunctionType)
+      val parameterList = type.parameters.filterIndexed { index, _ -> index != argumentIndex }
+      report(
+        CodeSmell(
+          issue,
+          Entity.from(eventParameter, Location.from(eventParameter)),
+          "Unnecessary event callback arguments. Move all \"$argumentReceiverName\" access " +
+            "to the parent composable event handler and switch \"${eventParameter.name}\" type to " +
+            "\"${parameterList.joinToString(prefix = "(", postfix = ")", transform = { it.text })} -> Unit\""
+        )
+      )
     }
-
-    private fun KtParameter.isEventParameter(): Boolean {
-        val firstChild = this.children.first { it is KtTypeReference }
-        if ((firstChild as KtTypeReference).hasAnnotation("Composable")) return false
-        return firstChild.typeElement is KtFunctionType && (firstChild.typeElement as KtFunctionType).returnTypeReference?.text == "Unit"
-    }
-
-    private inner class UnnecessaryHandlerArgumentsVisitor(
-        private val stateParameters: List<KtParameter>,
-        private val eventParameters: List<KtParameter>,
-    ) : DetektVisitor() {
-        private val stateParameterNames = stateParameters.map { it.name }
-
-        override fun visitCallExpression(expression: KtCallExpression) {
-            super.visitCallExpression(expression)
-            val eventParameterForCall = eventParameters.find { it.name == expression.calleeExpression?.text }
-            if (eventParameterForCall != null) {
-                expression.valueArguments.forEachIndexed { index, argument ->
-                    val argumentExpression = argument.getArgumentExpression()
-                    //   data -> argumentReceiverName == data
-                    //   data.id -> argumentReceiverName == data
-                    //   data.nested.id -> argumentReceiverName == data
-                    //   data.copy() -> null
-                    val argumentReceiverName = when {
-                        argumentExpression is KtDotQualifiedExpression &&
-                            argumentExpression.lastChild !is KtCallExpression -> {
-                            argumentExpression.text.takeWhile { it != '.' }
-                        }
-                        argumentExpression is KtNameReferenceExpression -> argument.text
-                        else -> null
-                    }
-                    if (argumentReceiverName != null && stateParameterNames.contains(argumentReceiverName)) {
-                        reportError(eventParameterForCall, argumentReceiverName, argumentIndex = index)
-                    }
-                }
-            }
-        }
-
-        private fun reportError(eventParameter: KtParameter, argumentReceiverName: String, argumentIndex: Int) {
-            val type = ((eventParameter.children.first() as KtTypeReference).typeElement as KtFunctionType)
-            val parameterList = type.parameters.filterIndexed { index, _ -> index != argumentIndex }
-            report(
-                CodeSmell(
-                    issue,
-                    Entity.from(eventParameter, Location.from(eventParameter)),
-                    "Unnecessary event callback arguments. Move all \"$argumentReceiverName\" access to the parent composable event handler and switch \"${eventParameter.name}\" type to \"${parameterList.joinToString(prefix = "(", postfix = ")", transform = { it.text })} -> Unit\""
-                )
-            )
-        }
-    }
+  }
 }
