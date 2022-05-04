@@ -19,32 +19,38 @@ import org.jetbrains.kotlin.psi.KtParameter
 import org.jetbrains.kotlin.psi.KtTypeReference
 
 /**
- * Checks that event handlers of Composable do not have unnecessary parameter which could be passed by parent
+ * Checks that event handlers of Composable do not have unnecessary parameter which could be provided by parent.
+ * This makes individual components less coupled to the structure of their parameter and leaves that to the parent,
+ * and in turn this often leads to simplification of composable.
  *
  * Wrong:
  *
  * ```
- * data class Data(id: Id, title: String)
+ * data class Data(id: Int, title: String)
  *
- * fun Component(data: Data, somethingClicked: (Id) -> Unit) {
+ * fun Component(data: Data, somethingClicked: (Int) -> Unit) {
  *   Button(onClick = { somethingClicked(data.id) })
  * }
  *
- * val data = Data(id = Id(3), title = "foo")
- * Component(data = data, somethingClicked = { id -> process(id) })
+ * fun Parent() {
+ *   val data = Data(id = 3, title = "foo")
+ *   Component(data = data, somethingClicked = { id -> process(id) })
+ * }
  * ```
  *
  * Correct:
  *
  * ```
- * data class Data(id: Id, title: String)
+ * data class Data(id: Int, title: String)
  *
  * fun Component(data: Data, somethingClicked: () -> Unit) {
  *   Button(onClick = somethingClicked)
  * }
  *
- * val data = Data(id = Id(3), title = "foo")
- * Component(data = data, somethingClicked = { process(data.id) })
+ * fun Parent() {
+ *   val data = Data(id = 3, title = "foo")
+ *   Component(data = data, somethingClicked = { process(data.id) })
+ * }
  * ```
  */
 class UnnecessaryEventHandlerParameter(config: Config = Config.empty) : Rule(config) {
