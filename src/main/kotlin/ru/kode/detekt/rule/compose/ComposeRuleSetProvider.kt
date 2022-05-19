@@ -14,7 +14,6 @@ class ComposeRuleSetProvider : RuleSetProvider {
         ModifierHeightWithText(config),
         ReusedModifierInstance(config),
         PublicComposablePreview(config),
-        ModifierArgumentPosition(config),
         ModifierParameterPosition(config),
         ComposableEventParameterNaming(config),
         UnnecessaryEventHandlerParameter(config)

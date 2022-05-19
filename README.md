@@ -20,7 +20,7 @@ Short summary of the rules in this rule set:
 - `ModifierHeightWithText` suggests using `Modifier.heightIn()` instead of `Modifier.height()` on a layouts which have `Text` children, so that if the text turns out to be long and would wrap, layout will not cut it off
 
 
-- `ModifierArgumentPosition` and `ModifierParameterPosition` ensure that `modifier` is declared and passed as a first parameter/argument
+- `ModifierParameterPosition` ensures that `modifier` is declared as a first parameter
 
 
 - `PublicComposablePreview` finds and reports composable previews which are not marked as `private`
@@ -45,8 +45,6 @@ compose:
   ComposableEventParameterNaming:
     active: true
   ModifierHeightWithText:
-    active: true
-  ModifierArgumentPosition:
     active: true
   ModifierParameterPosition:
     active: true

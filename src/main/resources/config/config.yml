@@ -6,8 +6,6 @@ compose:
     active: true
   PublicComposablePreview:
     active: true
-  ModifierArgumentPosition:
-    active: true
   ModifierParameterPosition:
     active: true
   ComposableEventParameterNaming:
