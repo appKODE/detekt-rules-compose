@@ -25,6 +25,7 @@ Short summary of the rules in this rule set:
 
 - `PublicComposablePreview` finds and reports composable previews which are not marked as `private`
 
+Rules can be individually turned `on` or `off` in the configuration file.  
 More detailed rule descriptions with code snippets can be found in the [Wiki](https://github.com/appKODE/detekt-rules-compose/wiki).
 
 # Installation and configuration
