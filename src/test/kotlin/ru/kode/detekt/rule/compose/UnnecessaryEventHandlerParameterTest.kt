@@ -1,3 +1,6 @@
+/*
+ * Copyright 2022 KODE LLC. Use of this source code is governed by the MIT license.
+ */
 package ru.kode.detekt.rule.compose
 
 import io.gitlab.arturbosch.detekt.test.lint
