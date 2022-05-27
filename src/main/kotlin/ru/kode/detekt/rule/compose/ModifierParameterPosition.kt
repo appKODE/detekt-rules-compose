@@ -20,20 +20,41 @@ import java.util.Collections
 import java.util.IdentityHashMap
 
 /**
- * Checks that "modifier" argument for Composable function is passed as a first parameter.
+ * Checks that "modifier" argument for Composable function is passed as a first optional parameter.
  *
  * Wrong:
  * ```
  * fun Button(
- *   arrangement = Vertical,
- *   modifier = Modifier,
+ *   arrangement: Arrangement = Arrangement.spacedBy(12.dp),
+ *   modifier: Modifier = Modifier.height(16.dp),
  * )
  * ```
  * Correct:
  * ```
  * fun Button(
- *   modifier = Modifier,
- *   arrangement = Vertical,
+ *   modifier: Modifier = Modifier.height(16.dp),
+ *   arrangement: Arrangement = Arrangement.spacedBy(12.dp),
+ * )
+ * ```
+ *
+ * When required and optional parameters are present, `modifier` needs to be the first among the optional parameters:
+ *
+ * Wrong:
+ * ```
+ * fun Button(
+ *   text: String,
+ *   onClick: () -> Unit,
+ *   arrangement: Arrangement = Arrangement.spacedBy(12.dp),
+ *   modifier: Modifier = Modifier.height(16.dp),
+ * )
+ * ```
+ * Correct:
+ * ```
+ * fun Button(
+ *   text: String,
+ *   onClick: () -> Unit,
+ *   modifier: Modifier = Modifier.height(16.dp),
+ *   arrangement: Arrangement = Arrangement.spacedBy(12.dp),
  * )
  * ```
  */
@@ -54,9 +75,26 @@ class ModifierParameterPosition(config: Config = Config.empty) : Rule(config) {
   }
 
   private fun checkFunction(function: KtNamedFunction) {
-    val position = function.valueParameters.indexOfFirst { it.isModifierParameter() }
-    if (position > 0) {
-      incorrectPositions.add(function)
+    if (function.valueParameters.any { it.isComposableSlot() && !it.hasDefaultValue() }) {
+      // there's no point in enforcing modifier-after-last-required in presence of required composable lambda slots:
+      //  putting modifier after "content" slot would break "trailing lambda" syntax, and even if we would make
+      //  an exception and require to put modifier before the slot, it still accomplishes nothing, because slot is
+      //  a required-argument and so named arguments syntax would be needed anyway
+      return
+    }
+    val valueParameters = function.valueParameters
+    val modifierPosition = valueParameters.indexOfFirst { it.isModifierParameter() }
+    if (modifierPosition >= 0) {
+      val firstOptionalPosition = valueParameters.indexOfFirst { it.hasDefaultValue() && !it.isModifierParameter() }
+      val lastRequiredPosition = valueParameters.indexOfLast { !it.hasDefaultValue() && !it.isModifierParameter() }
+      when {
+        lastRequiredPosition >= 0 && modifierPosition != lastRequiredPosition + 1 -> {
+          incorrectPositions.add(function)
+        }
+        firstOptionalPosition >= 0 && modifierPosition != firstOptionalPosition - 1 -> {
+          incorrectPositions.add(function)
+        }
+      }
     }
   }
 
@@ -66,15 +104,28 @@ class ModifierParameterPosition(config: Config = Config.empty) : Rule(config) {
 
   override fun postVisit(root: KtFile) {
     incorrectPositions.forEach { node ->
+      val valueParameters = node.valueParameters
+      val firstOptional = valueParameters.firstOrNull { it.hasDefaultValue() }
+      val lastRequired = valueParameters
+        .filterNot { it.isModifierParameter() }.lastOrNull { !it.hasDefaultValue() }
       report(
         CodeSmell(
           issue,
-          Entity.from(node, Location.from(node.valueParameters.first { it.isModifierParameter() })),
-          "Modifier parameter of composable functions must always be first"
+          Entity.from(node, Location.from(valueParameters.first { it.isModifierParameter() })),
+          if (firstOptional != null && lastRequired == null) {
+            "Modifier parameter should be the first optional parameter" +
+              " (put it before \"${firstOptional.identifierName()}\")"
+          } else if (lastRequired != null) {
+            "Modifier parameter should be the first parameter after required parameters" +
+              " (put it after \"${lastRequired.identifierName()}\")"
+          } else {
+            "Modifier parameter must be a first optional parameter"
+          }
         )
       )
     }
   }
 
   private fun KtParameter.isModifierParameter() = identifierName() == "modifier"
+  private fun KtParameter.isComposableSlot() = this.typeReference?.hasAnnotation("Composable") == true
 }
