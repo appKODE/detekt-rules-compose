@@ -1,6 +1,6 @@
 # Detekt rules for Jetpack Compose
 
-[![MavenCentral](https://img.shields.io/maven-central/v/ru.kode/detekt-rules-compose?versionPrefix=1.0.0)](https://search.maven.org/artifact/ru.kode/detekt-rules-compose)
+[![MavenCentral](https://img.shields.io/maven-central/v/ru.kode/detekt-rules-compose?versionPrefix=1.0.1)](https://search.maven.org/artifact/ru.kode/detekt-rules-compose)
 
 A set of [Detekt](https://detekt.dev) rules to help prevent common errors in projects using Jetpack Compose.
 
