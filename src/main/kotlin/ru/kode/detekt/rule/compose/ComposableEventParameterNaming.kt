@@ -64,15 +64,16 @@ class ComposableEventParameterNaming(config: Config = Config.empty) : Rule(confi
   }
 
   private fun reportError(node: KtParameter) {
-    val usesPastTense = node.name!!.startsWith("on") && node.name!!.endsWith("ed")
+    val name = node.name!!
+    val usesPastTense = name.startsWith("on") && name.endsWith("ed")
     report(
       CodeSmell(
         issue,
         Entity.from(node),
         if (usesPastTense) {
-          "Invalid event parameter name. Do not use past tense. For example: \"onClicked\" → \"onClick\""
+          "Invalid event parameter name `${name}`. Do not use past tense. For example: \"onClicked\" → \"onClick\""
         } else {
-          "Invalid event parameter name. Use names like \"onClick\", \"onValueChange\" etc"
+          "Invalid event parameter name `${name}`. Use names like \"onClick\", \"onValueChange\" etc"
         }
       )
     )
