@@ -71,9 +71,9 @@ class ComposableEventParameterNaming(config: Config = Config.empty) : Rule(confi
         issue,
         Entity.from(node),
         if (usesPastTense) {
-          "Invalid event parameter name `${name}`. Do not use past tense. For example: \"onClicked\" → \"onClick\""
+          "Invalid event parameter name \"$name\". Do not use past tense. For example: \"onClicked\" → \"onClick\""
         } else {
-          "Invalid event parameter name `${name}`. Use names like \"onClick\", \"onValueChange\" etc"
+          "Invalid event parameter name \"$name\". Use names like \"onClick\", \"onValueChange\" etc"
         }
       )
     )
