@@ -53,6 +53,10 @@ compose:
     active: true
 ```
 
+# Contributors
+
+Maintained by [KODE](https://kode.ru) and [Contributors](https://github.com/appKODE/detekt-rules-compose/graphs/contributors) ❤️
+
 # License
 ```
 MIT License
