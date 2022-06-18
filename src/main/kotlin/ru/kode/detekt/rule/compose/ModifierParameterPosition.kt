@@ -16,7 +16,7 @@ import io.gitlab.arturbosch.detekt.rules.identifierName
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import ru.kode.detekt.rule.compose.node.isComposableSlot
-import ru.kode.detekt.rule.compose.node.isModifierParameter
+import ru.kode.detekt.rule.compose.node.isModifier
 import java.util.Collections
 import java.util.IdentityHashMap
 
@@ -84,10 +84,10 @@ class ModifierParameterPosition(config: Config = Config.empty) : Rule(config) {
       return
     }
     val valueParameters = function.valueParameters
-    val modifierPosition = valueParameters.indexOfFirst { it.isModifierParameter() }
+    val modifierPosition = valueParameters.indexOfFirst { it.isModifier() }
     if (modifierPosition >= 0) {
-      val firstOptionalPosition = valueParameters.indexOfFirst { it.hasDefaultValue() && !it.isModifierParameter() }
-      val lastRequiredPosition = valueParameters.indexOfLast { !it.hasDefaultValue() && !it.isModifierParameter() }
+      val firstOptionalPosition = valueParameters.indexOfFirst { it.hasDefaultValue() && !it.isModifier() }
+      val lastRequiredPosition = valueParameters.indexOfLast { !it.hasDefaultValue() && !it.isModifier() }
       when {
         lastRequiredPosition >= 0 && modifierPosition != lastRequiredPosition + 1 -> {
           incorrectPositions.add(function)
@@ -108,11 +108,11 @@ class ModifierParameterPosition(config: Config = Config.empty) : Rule(config) {
       val valueParameters = node.valueParameters
       val firstOptional = valueParameters.firstOrNull { it.hasDefaultValue() }
       val lastRequired = valueParameters
-        .filterNot { it.isModifierParameter() }.lastOrNull { !it.hasDefaultValue() }
+        .filterNot { it.isModifier() }.lastOrNull { !it.hasDefaultValue() }
       report(
         CodeSmell(
           issue,
-          Entity.from(node, Location.from(valueParameters.first { it.isModifierParameter() })),
+          Entity.from(node, Location.from(valueParameters.first { it.isModifier() })),
           if (firstOptional != null && lastRequired == null) {
             "Modifier parameter should be the first optional parameter" +
               " (put it before \"${firstOptional.identifierName()}\")"

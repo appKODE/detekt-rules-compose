@@ -20,7 +20,7 @@ import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.KtParameter
 import org.jetbrains.kotlin.psi.KtTypeReference
-import ru.kode.detekt.rule.compose.node.isEventParameter
+import ru.kode.detekt.rule.compose.node.isEventHandler
 
 /**
  * Checks that event handlers of Composable do not have unnecessary parameter which could be provided by parent.
@@ -68,7 +68,7 @@ class UnnecessaryEventHandlerParameter(config: Config = Config.empty) : Rule(con
   override fun visitNamedFunction(function: KtNamedFunction) {
     if (function.hasAnnotation("Composable")) {
       val stateParameters = function.valueParameters.filter { it.isStateParameter() }
-      val eventParameters = function.valueParameters.filter { it.isEventParameter() }
+      val eventParameters = function.valueParameters.filter { it.isEventHandler() }
       if (stateParameters.isNotEmpty()) {
         function.bodyExpression?.accept(UnnecessaryHandlerArgumentsVisitor(stateParameters, eventParameters))
       }
@@ -76,7 +76,7 @@ class UnnecessaryEventHandlerParameter(config: Config = Config.empty) : Rule(con
   }
 
   private fun KtParameter.isStateParameter(): Boolean {
-    return !this.isEventParameter()
+    return !this.isEventHandler()
   }
 
   private inner class UnnecessaryHandlerArgumentsVisitor(

@@ -10,7 +10,7 @@ fun KtParameter.isComposableSlot(): Boolean {
   return this.typeReference?.hasAnnotation("Composable") == true
 }
 
-fun KtParameter.isEventParameter(): Boolean {
+fun KtParameter.isEventHandler(): Boolean {
   if (this.isComposableSlot()) return false
   val firstChild = this.children.first { it is KtTypeReference }
   val firstChildType = (firstChild as KtTypeReference).typeElement
@@ -19,6 +19,6 @@ fun KtParameter.isEventParameter(): Boolean {
     firstChildType.receiverTypeReference == null
 }
 
-fun KtParameter.isModifierParameter(): Boolean {
+fun KtParameter.isModifier(): Boolean {
   return identifierName() == "modifier"
 }

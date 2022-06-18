@@ -13,7 +13,7 @@ import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.KtParameter
 import org.jetbrains.kotlin.util.capitalizeDecapitalize.toLowerCaseAsciiOnly
 import ru.kode.detekt.rule.compose.node.isComposableSlot
-import ru.kode.detekt.rule.compose.node.isEventParameter
+import ru.kode.detekt.rule.compose.node.isEventHandler
 
 /**
  * Checks that parameters of Composable functions have a correct order:
@@ -102,7 +102,7 @@ class ComposableParametersOrdering(config: Config = Config.empty) : Rule(config)
   }
 
   private fun checkRequiredOptionalParametersOrdering(function: KtNamedFunction) {
-    val valueParameters = function.valueParameters.dropLastWhile { it.isComposableSlot() || it.isEventParameter() }
+    val valueParameters = function.valueParameters.dropLastWhile { it.isComposableSlot() || it.isEventHandler() }
     val lastRequiredIndex = valueParameters.indexOfLast { !it.hasDefaultValue() }
     val firstOptionalIndex = valueParameters.indexOfFirst { it.hasDefaultValue() }
     if (firstOptionalIndex in 0 until lastRequiredIndex) {

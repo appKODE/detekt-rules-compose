@@ -13,7 +13,7 @@ import io.gitlab.arturbosch.detekt.api.Severity
 import io.gitlab.arturbosch.detekt.rules.hasAnnotation
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.KtParameter
-import ru.kode.detekt.rule.compose.node.isEventParameter
+import ru.kode.detekt.rule.compose.node.isEventHandler
 
 /**
  * Checks that event parameters of Composable functions have proper naming
@@ -44,7 +44,7 @@ class ComposableEventParameterNaming(config: Config = Config.empty) : Rule(confi
 
   override fun visitNamedFunction(function: KtNamedFunction) {
     if (function.hasAnnotation("Composable")) {
-      function.valueParameters.filter { it.isEventParameter() }.forEach { parameter ->
+      function.valueParameters.filter { it.isEventHandler() }.forEach { parameter ->
         val name = parameter.name!!
         if (!name.startsWith("on")) {
           reportError(parameter)
