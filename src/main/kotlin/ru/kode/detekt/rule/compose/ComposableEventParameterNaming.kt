@@ -60,7 +60,8 @@ class ComposableEventParameterNaming(config: Config = Config.empty) : Rule(confi
     val firstChild = this.children.first { it is KtTypeReference }
     if ((firstChild as KtTypeReference).hasAnnotation("Composable")) return false
     return firstChild.typeElement is KtFunctionType &&
-      (firstChild.typeElement as KtFunctionType).returnTypeReference?.text == "Unit"
+      (firstChild.typeElement as KtFunctionType).returnTypeReference?.text == "Unit" &&
+      (firstChild.typeElement as KtFunctionType).receiverTypeReference == null
   }
 
   private fun reportError(node: KtParameter) {

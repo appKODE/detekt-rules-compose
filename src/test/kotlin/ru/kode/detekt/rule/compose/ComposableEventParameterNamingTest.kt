@@ -155,4 +155,24 @@ class ComposableEventParameterNamingTest : ShouldSpec({
 
     findings.shouldBeEmpty()
   }
+
+  should("ignore parameters with scoped receiver") {
+    // language=kotlin
+    val code = """
+      @Composable
+      fun Scaffold(
+          topBar: @Composable () -> Unit,
+          logo: @Composable BoxScope.() -> Unit,
+          content: LazyListScope.(minContentHeight: Dp) -> Unit,
+          bottomContent: @Composable ColumnScope.() -> Unit,
+          modifier: Modifier = Modifier,
+          snackbarHost: @Composable (SnackbarHostState) -> Unit = { SnackbarHost(it) },
+      ) {
+      }
+    """.trimIndent()
+
+    val findings = ComposableEventParameterNaming().lint(code)
+
+    findings.shouldBeEmpty()
+  }
 })
