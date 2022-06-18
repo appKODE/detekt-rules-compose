@@ -11,10 +11,9 @@ import io.gitlab.arturbosch.detekt.api.Issue
 import io.gitlab.arturbosch.detekt.api.Rule
 import io.gitlab.arturbosch.detekt.api.Severity
 import io.gitlab.arturbosch.detekt.rules.hasAnnotation
-import org.jetbrains.kotlin.psi.KtFunctionType
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.KtParameter
-import org.jetbrains.kotlin.psi.KtTypeReference
+import ru.kode.detekt.rule.compose.node.isEventParameter
 
 /**
  * Checks that event parameters of Composable functions have proper naming
@@ -54,14 +53,6 @@ class ComposableEventParameterNaming(config: Config = Config.empty) : Rule(confi
         }
       }
     }
-  }
-
-  private fun KtParameter.isEventParameter(): Boolean {
-    val firstChild = this.children.first { it is KtTypeReference }
-    if ((firstChild as KtTypeReference).hasAnnotation("Composable")) return false
-    return firstChild.typeElement is KtFunctionType &&
-      (firstChild.typeElement as KtFunctionType).returnTypeReference?.text == "Unit" &&
-      (firstChild.typeElement as KtFunctionType).receiverTypeReference == null
   }
 
   private fun reportError(node: KtParameter) {
