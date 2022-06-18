@@ -12,3 +12,5 @@ compose:
     active: false
   UnnecessaryEventHandlerParameter:
     active: true
+  ComposableParametersOrdering:
+    active: true
