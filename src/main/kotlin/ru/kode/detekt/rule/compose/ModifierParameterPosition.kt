@@ -15,7 +15,8 @@ import io.gitlab.arturbosch.detekt.rules.hasAnnotation
 import io.gitlab.arturbosch.detekt.rules.identifierName
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtNamedFunction
-import org.jetbrains.kotlin.psi.KtParameter
+import ru.kode.detekt.rule.compose.node.isComposableSlot
+import ru.kode.detekt.rule.compose.node.isModifierParameter
 import java.util.Collections
 import java.util.IdentityHashMap
 
@@ -125,7 +126,4 @@ class ModifierParameterPosition(config: Config = Config.empty) : Rule(config) {
       )
     }
   }
-
-  private fun KtParameter.isModifierParameter() = identifierName() == "modifier"
-  private fun KtParameter.isComposableSlot() = this.typeReference?.hasAnnotation("Composable") == true
 }

@@ -20,6 +20,7 @@ import org.jetbrains.kotlin.psi.KtLambdaExpression
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.KtReferenceExpression
 import org.jetbrains.kotlin.psi.psiUtil.getChildrenOfType
+import ru.kode.detekt.rule.compose.node.isModifierParameter
 
 /**
  * Reports errors when reusing the modifier instance on a wrong level of composable hierarchy, for example:
@@ -55,7 +56,7 @@ class ReusedModifierInstance(config: Config = Config.empty) : Rule(config) {
   )
 
   override fun visitNamedFunction(function: KtNamedFunction) {
-    if (function.hasAnnotation("Composable") && function.valueParameters.any { it.identifierName() == "modifier" }) {
+    if (function.hasAnnotation("Composable") && function.valueParameters.any { it.isModifierParameter() }) {
       function.bodyBlockExpression?.getChildrenOfType<KtCallExpression>()?.forEach {
         it.accept(ChildComposableCallsVisitor())
       }
