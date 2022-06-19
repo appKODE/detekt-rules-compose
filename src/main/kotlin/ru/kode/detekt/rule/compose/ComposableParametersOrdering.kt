@@ -13,15 +13,12 @@ import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.KtParameter
 import org.jetbrains.kotlin.util.capitalizeDecapitalize.toLowerCaseAsciiOnly
 import ru.kode.detekt.rule.compose.node.isComposableSlot
-import ru.kode.detekt.rule.compose.node.isEventHandler
 
 /**
  * Checks that parameters of Composable functions have a correct order:
  *
  * 1. Required parameters come first
  * 2. Optional parameters come after required
- * 3. Required composable slot parameters come after required non-slot parameters
- * 4. Optional composable slot parameters come after optional non-slot parameters
  *
  * Non-compliant:
  *
@@ -42,33 +39,6 @@ import ru.kode.detekt.rule.compose.node.isEventHandler
  *   enabled: Boolean = false,
  * )
  * ```
- *
- * For composable slots:
- *
- * Non-compliant:
- *
- * ```
- * Header(
- *   title: String,
- *   content: @Composable () -> Unit,
- *   description: String,
- *   subContent: (@Composable () -> Unit)? = null,
- *   subtitle: String? = null,
- * )
- * ```
- *
- * Compliant:
- *
- * ```
- * Header(
- *   title: String,
- *   description: String,
- *   content: @Composable () -> Unit,
- *   subtitle: String? = null,
- *   subContent: (@Composable () -> Unit)? = null,
- * )
- * ```
- *
  */
 class ComposableParametersOrdering(config: Config = Config.empty) : Rule(config) {
   override val issue = Issue(
@@ -81,7 +51,7 @@ class ComposableParametersOrdering(config: Config = Config.empty) : Rule(config)
   override fun visitNamedFunction(function: KtNamedFunction) {
     if (function.hasAnnotation("Composable")) {
       checkRequiredOptionalParametersOrdering(function)
-      if (findings.isEmpty()) {
+      if (CHECK_IN_PRESENCE_OF_SLOTS_ENABLED && findings.isEmpty()) {
         checkSlotParametersOrdering(function)
       }
     }
@@ -102,7 +72,28 @@ class ComposableParametersOrdering(config: Config = Config.empty) : Rule(config)
   }
 
   private fun checkRequiredOptionalParametersOrdering(function: KtNamedFunction) {
-    val valueParameters = function.valueParameters.dropLastWhile { it.isComposableSlot() || it.isEventHandler() }
+    // Should we drop last required slots from the check to allow more convenient calls?
+    //
+    // Test("hello") { Content() }
+    //
+    // instead of more verbose (especially in presence of a lot of arguments)
+    //
+    // Test("hello", content = { Content() })
+    //
+    // (assuming `Test` has required + optional parameters + trailing required lambda)
+    //
+    // I.e. below we could do
+    //
+    // val valueParameters = function.valueParameters.dropLastWhile { it.isComposableSlot() || it.isEventHandler() }
+    //
+    // Seems to work, but could be not the best way to go!
+    //
+    // See (grep for) NOTE_ALLOWING_REQUIRED_TRAILING_SLOT_SPECIAL_CASE for details
+    //
+    if (function.valueParameters.any { it.isComposableSlot() } && !CHECK_IN_PRESENCE_OF_SLOTS_ENABLED) {
+      return
+    }
+    val valueParameters = function.valueParameters
     val lastRequiredIndex = valueParameters.indexOfLast { !it.hasDefaultValue() }
     val firstOptionalIndex = valueParameters.indexOfFirst { it.hasDefaultValue() }
     if (firstOptionalIndex in 0 until lastRequiredIndex) {
@@ -132,3 +123,8 @@ class ComposableParametersOrdering(config: Config = Config.empty) : Rule(config)
     )
   }
 }
+
+// Currently disabled
+// See (grep in project) NOTE_ALLOWING_REQUIRED_TRAILING_SLOT_SPECIAL_CASE
+// for details
+internal const val CHECK_IN_PRESENCE_OF_SLOTS_ENABLED = false
