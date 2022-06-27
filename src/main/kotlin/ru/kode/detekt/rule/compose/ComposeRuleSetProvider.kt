@@ -17,7 +17,9 @@ class ComposeRuleSetProvider : RuleSetProvider {
         ModifierParameterPosition(config),
         ComposableEventParameterNaming(config),
         UnnecessaryEventHandlerParameter(config),
-        ComposableParametersOrdering(config)
+        ComposableParametersOrdering(config),
+        ModifierDefaultValue(config),
+        MissingModifierDefaultValue(config)
       )
     )
   }

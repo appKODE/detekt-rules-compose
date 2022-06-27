@@ -14,3 +14,7 @@ compose:
     active: true
   ComposableParametersOrdering:
     active: true
+  ModifierDefaultValue:
+    active: true
+  MissingModifierDefaultValue:
+    active: true
