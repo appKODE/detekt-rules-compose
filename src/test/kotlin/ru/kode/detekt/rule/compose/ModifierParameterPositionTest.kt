@@ -230,6 +230,25 @@ class ModifierParameterPositionTest : ShouldSpec({
     findings.shouldBeEmpty()
   }
 
+  should("not report incorrect position when last parameter is a required composable lambda with scoped receiver") {
+    // language=kotlin
+    val code = """
+      @Composable
+      fun Test(
+          text: String,
+          modifier: Modifier,
+          verticalAlignment: Alignment,
+          content: @Composable ColumnScope.() -> Unit,
+      ) {
+          Text(text = props.title)
+      }
+    """.trimIndent()
+
+    val findings = ModifierParameterPosition().lint(code)
+
+    findings.shouldBeEmpty()
+  }
+
   should("report incorrect position when incorrect position with composable lambda with default value") {
     // language=kotlin
     val code = """
