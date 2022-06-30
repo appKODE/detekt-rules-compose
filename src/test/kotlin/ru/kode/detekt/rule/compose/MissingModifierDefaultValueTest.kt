@@ -15,7 +15,7 @@ class MissingModifierDefaultValueTest : ShouldSpec(
       val code = """
       @Composable
       @Preview
-      fun Test(modifier: Modifier = Modifier) {
+      fun Test(modifier: Modifier) {
         Text(text = "3")
       }
       """.trimIndent()
@@ -32,6 +32,21 @@ class MissingModifierDefaultValueTest : ShouldSpec(
       @Preview
       fun Test(modifier: Modifier = Modifier) {
         Text(text = "3")
+      }
+      """.trimIndent()
+
+      val findings = MissingModifierDefaultValue().lint(code)
+
+      findings.shouldBeEmpty()
+    }
+
+    should("not report if no modifier parameter present") {
+      // language=kotlin
+      val code = """
+      @Composable
+      @Preview
+      fun Test(text: String) {
+        Text(text = text)
       }
       """.trimIndent()
 
