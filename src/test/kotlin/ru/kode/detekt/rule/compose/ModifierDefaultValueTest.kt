@@ -25,6 +25,25 @@ class ModifierDefaultValueTest : ShouldSpec(
       findings shouldHaveSize 1
     }
 
+    should("report if modifier parameter has an invalid default value wrapped on multiple lines") {
+      // language=kotlin
+      val code = """
+      @Composable
+      @Preview
+      fun Test(
+        modifier: Modifier = Modifier
+          .fillMaxSize()
+          .weight(1f)
+      ) {
+        Text(text = "3")
+      }
+      """.trimIndent()
+
+      val findings = ModifierDefaultValue().lint(code)
+
+      findings shouldHaveSize 1
+    }
+
     should("not report if modifier parameter has a correct default value") {
       // language=kotlin
       val code = """
