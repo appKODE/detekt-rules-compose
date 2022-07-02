@@ -16,12 +16,16 @@ Short summary of the rules in this rule set:
 
 - `ComposableEventParameterNaming` ensures that all event handler parameters of composable functions are named in the same Compose-like style, i.e. they have `on` prefix and do not use past tense
 
+- `ComposableParametersOrdering` suggests separating required an optional parameters of the composable function into groups
 
 - `ModifierHeightWithText` suggests using `Modifier.heightIn()` instead of `Modifier.height()` on a layouts which have `Text` children, so that if the text turns out to be long and would wrap, layout will not cut it off
 
 
 - `ModifierParameterPosition` ensures that `modifier` is declared as a first parameter
 
+- `ModifierDefaultValue` ensures that `modifier` parameter has a correct default value
+
+- `MissingModifierDefaultValue` checks if `modifier` default value is specified
 
 - `PublicComposablePreview` finds and reports composable previews which are not marked as `private`
 
@@ -45,9 +49,15 @@ compose:
     active: true
   ComposableEventParameterNaming:
     active: true
+  ComposableParametersOrdering:
+    active: true
   ModifierHeightWithText:
     active: true
   ModifierParameterPosition:
+    active: true
+  ModifierDefaultValue:
+    active: true
+  MissingModifierDefaultValue:
     active: true
   PublicComposablePreview:
     active: true
