@@ -116,8 +116,8 @@ allprojects {
           val versionName: String by project
           url = if (versionName.endsWith("SNAPSHOT")) snapshotsRepoUrl else releasesRepoUrl
           credentials {
-            username = project.findProject("NEXUS_USERNAME")?.toString()
-            password = project.findProject("NEXUS_PASSWORD")?.toString()
+            username = project.findProperty("NEXUS_USERNAME")?.toString()
+            password = project.findProperty("NEXUS_PASSWORD")?.toString()
           }
         }
       }
