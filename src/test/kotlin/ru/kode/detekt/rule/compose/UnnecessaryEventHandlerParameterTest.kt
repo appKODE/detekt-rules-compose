@@ -177,7 +177,7 @@ class UnnecessaryEventHandlerParameterTest : ShouldSpec({
           @Composable
           internal fun MyButton(
             state: State,
-            onClick: (String) -> Unit,
+            @Suppress("UnnecessaryEventHandlerParameter") onClick: (String) -> Unit,
           ) {
             when (state) {
               State.Loading -> Text("Loading")
