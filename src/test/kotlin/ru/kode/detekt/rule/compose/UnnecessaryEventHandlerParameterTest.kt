@@ -4,6 +4,7 @@
 package ru.kode.detekt.rule.compose
 
 import io.gitlab.arturbosch.detekt.test.lint
+import io.kotest.assertions.throwables.shouldNotThrowAny
 import io.kotest.core.spec.style.ShouldSpec
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
@@ -168,5 +169,25 @@ class UnnecessaryEventHandlerParameterTest : ShouldSpec({
     val findings = UnnecessaryEventHandlerParameter().lint(code)
 
     findings.single().message shouldContain "switch \"onButtonClick\" type to \"(Int, Int) -> Unit\""
+  }
+
+  should("allow annotations on the lambda parameter") {
+    // language=kotlin
+    val code = """
+          @Composable
+          internal fun MyButton(
+            state: State,
+            onClick: (String) -> Unit,
+          ) {
+            when (state) {
+              State.Loading -> Text("Loading")
+              is State.Data -> Button(onClick = { onClick(state.id) }) { Text("Click here") }
+            }
+          }
+    """.trimIndent()
+
+    shouldNotThrowAny {
+      UnnecessaryEventHandlerParameter().lint(code)
+    }
   }
 })

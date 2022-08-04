@@ -20,6 +20,7 @@ import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.KtParameter
 import org.jetbrains.kotlin.psi.KtTypeReference
+import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstance
 import ru.kode.detekt.rule.compose.node.isEventHandler
 
 /**
@@ -111,7 +112,7 @@ class UnnecessaryEventHandlerParameter(config: Config = Config.empty) : Rule(con
     }
 
     private fun reportError(eventParameter: KtParameter, argumentReceiverName: String, argumentIndex: Int) {
-      val type = ((eventParameter.children.first() as KtTypeReference).typeElement as KtFunctionType)
+      val type = (eventParameter.children.firstIsInstance<KtTypeReference>().typeElement as KtFunctionType)
       val parameterList = type.parameters.filterIndexed { index, _ -> index != argumentIndex }
       report(
         CodeSmell(
