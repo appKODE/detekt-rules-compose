@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.2.0 - 2022-08-14
+
+* New rule: `TopLevelComposableFunctions` ensures that all composable functions are top-level functions (disabled by default)
+* Ignore overridden functions in `MissingModifierDefaultValue` (#11)
+* Fix exception in UnnecessaryEventHandlerParameter (#14)
+
 ## 1.1.0 - 2022-07-02
 
 * New rule: `ComposableParametersOrdering` suggests separating required an optional parameters of the composable function into groups
