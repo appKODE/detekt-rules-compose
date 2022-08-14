@@ -8,6 +8,7 @@ import io.gitlab.arturbosch.detekt.api.Issue
 import io.gitlab.arturbosch.detekt.api.Rule
 import io.gitlab.arturbosch.detekt.api.Severity
 import io.gitlab.arturbosch.detekt.rules.hasAnnotation
+import io.gitlab.arturbosch.detekt.rules.isOverride
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.KtParameter
 import ru.kode.detekt.rule.compose.node.isModifier
@@ -42,7 +43,7 @@ class MissingModifierDefaultValue(config: Config = Config.empty) : Rule(config) 
   override fun visitNamedFunction(function: KtNamedFunction) {
     if (function.hasAnnotation("Composable")) {
       val modifierParameter = function.valueParameters.find { it.isModifier() }
-      if (modifierParameter?.hasDefaultValue() == false) {
+      if (!function.isOverride() && modifierParameter?.hasDefaultValue() == false) {
         reportError(modifierParameter)
       }
     }
