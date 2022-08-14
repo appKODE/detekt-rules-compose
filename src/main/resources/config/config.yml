@@ -18,3 +18,5 @@ compose:
     active: true
   MissingModifierDefaultValue:
     active: true
+  TopLevelComposableFunctions:
+    active: false

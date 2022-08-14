@@ -29,6 +29,8 @@ Short summary of the rules in this rule set:
 
 - `PublicComposablePreview` finds and reports composable previews which are not marked as `private`
 
+- `TopLevelComposableFunctions` ensures that all composable functions are top-level functions (disabled by default)
+
 Rules can be individually turned `on` or `off` in the configuration file.  
 More detailed rule descriptions with code snippets can be found in the [Wiki](https://github.com/appKODE/detekt-rules-compose/wiki).
 
@@ -60,6 +62,8 @@ compose:
   MissingModifierDefaultValue:
     active: true
   PublicComposablePreview:
+    active: true
+  TopLevelComposableFunctions:
     active: true
 ```
 
