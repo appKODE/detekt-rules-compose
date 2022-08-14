@@ -55,6 +55,48 @@ class MissingModifierDefaultValueTest : ShouldSpec(
       findings.shouldBeEmpty()
     }
 
+    should("not report an interface function") {
+      // language=kotlin
+      val code = """
+      interface Screen {
+        @Composable
+        fun Content(modifier: Modifier)
+      }
+      """.trimIndent()
+
+      val findings = MissingModifierDefaultValue().lint(code)
+
+      findings.shouldBeEmpty()
+    }
+
+    should("not report an abstract function") {
+      // language=kotlin
+      val code = """
+      abstract class Screen {
+        @Composable
+        abstract fun Content(modifier: Modifier)
+      }
+      """.trimIndent()
+
+      val findings = MissingModifierDefaultValue().lint(code)
+
+      findings.shouldBeEmpty()
+    }
+
+    should("not report an open function") {
+      // language=kotlin
+      val code = """
+      open class Screen {
+        @Composable
+        open fun Content(modifier: Modifier) {}
+      }
+      """.trimIndent()
+
+      val findings = MissingModifierDefaultValue().lint(code)
+
+      findings.shouldBeEmpty()
+    }
+
     should("not report overriding function when inheriting an open class") {
       // language=kotlin
       val code = """
@@ -83,7 +125,7 @@ class MissingModifierDefaultValueTest : ShouldSpec(
       val code = """
       abstract class Screen {
         @Composable
-        abstract fun Content(modifier: Modifier = Modifier)
+        abstract fun Content(modifier: Modifier)
       }
 
       class ScreenImpl : Screen() {
@@ -103,7 +145,7 @@ class MissingModifierDefaultValueTest : ShouldSpec(
       val code = """
       interface Screen {
         @Composable
-        fun Content(modifier: Modifier = Modifier)
+        fun Content(modifier: Modifier)
       }
 
       class ScreenImpl : Screen {

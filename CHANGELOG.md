@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.2.1 - 2022-08-14
+
+* Ignore composable functions in interfaces/abstract classes for `MissingModifierDefaultValue` (#11)
+
 ## 1.2.0 - 2022-08-14
 
 * New rule: `TopLevelComposableFunctions` ensures that all composable functions are top-level functions (disabled by default)

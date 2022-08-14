@@ -8,9 +8,12 @@ import io.gitlab.arturbosch.detekt.api.Issue
 import io.gitlab.arturbosch.detekt.api.Rule
 import io.gitlab.arturbosch.detekt.api.Severity
 import io.gitlab.arturbosch.detekt.rules.hasAnnotation
+import io.gitlab.arturbosch.detekt.rules.isAbstract
+import io.gitlab.arturbosch.detekt.rules.isOpen
 import io.gitlab.arturbosch.detekt.rules.isOverride
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.KtParameter
+import org.jetbrains.kotlin.psi.psiUtil.containingClass
 import ru.kode.detekt.rule.compose.node.isModifier
 
 /**
@@ -43,6 +46,13 @@ class MissingModifierDefaultValue(config: Config = Config.empty) : Rule(config) 
   override fun visitNamedFunction(function: KtNamedFunction) {
     if (function.hasAnnotation("Composable")) {
       val modifierParameter = function.valueParameters.find { it.isModifier() }
+      // abstract functions and interface functions cannot have default parameters
+      // (Compose compiler plugin restriction).
+      // Open methods do not have those restrictions, but it feels logical to exclude them too
+      // in a similar manner
+      if (function.isAbstract() || function.isOpen() || function.containingClass()?.isInterface() == true) {
+        return
+      }
       if (!function.isOverride() && modifierParameter?.hasDefaultValue() == false) {
         reportError(modifierParameter)
       }
