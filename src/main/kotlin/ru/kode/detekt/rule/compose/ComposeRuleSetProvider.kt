@@ -20,7 +20,8 @@ class ComposeRuleSetProvider : RuleSetProvider {
         ComposableParametersOrdering(config),
         ModifierDefaultValue(config),
         MissingModifierDefaultValue(config),
-        TopLevelComposableFunctions(config)
+        TopLevelComposableFunctions(config),
+        ComposeFunctionName(config)
       )
     )
   }

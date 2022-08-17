@@ -20,3 +20,5 @@ compose:
     active: true
   TopLevelComposableFunctions:
     active: false
+  ComposeFunctionName:
+    active: true
