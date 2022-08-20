@@ -8,7 +8,7 @@ import io.kotest.core.spec.style.ShouldSpec
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
 
-class ComposeFunctionNameTest : ShouldSpec({
+class ComposableFunctionNameTest : ShouldSpec({
   should("report when returns Unit and starts with lower case") {
     // language=kotlin
     val code = """
@@ -18,7 +18,7 @@ class ComposeFunctionNameTest : ShouldSpec({
       }
     """.trimIndent()
 
-    val findings = ComposeFunctionName().lint(code)
+    val findings = ComposableFunctionName().lint(code)
 
     findings shouldHaveSize 1
   }
@@ -32,7 +32,7 @@ class ComposeFunctionNameTest : ShouldSpec({
       }
     """.trimIndent()
 
-    val findings = ComposeFunctionName().lint(code)
+    val findings = ComposableFunctionName().lint(code)
 
     findings shouldHaveSize 1
   }
@@ -46,7 +46,7 @@ class ComposeFunctionNameTest : ShouldSpec({
       }
     """.trimIndent()
 
-    val findings = ComposeFunctionName().lint(code)
+    val findings = ComposableFunctionName().lint(code)
 
     findings.shouldBeEmpty()
   }
@@ -60,7 +60,7 @@ class ComposeFunctionNameTest : ShouldSpec({
       }
     """.trimIndent()
 
-    val findings = ComposeFunctionName().lint(code)
+    val findings = ComposableFunctionName().lint(code)
 
     findings.shouldBeEmpty()
   }
@@ -72,7 +72,7 @@ class ComposeFunctionNameTest : ShouldSpec({
       fun Test(modifier: Modifier) = 3
     """.trimIndent()
 
-    val findings = ComposeFunctionName().lint(code)
+    val findings = ComposableFunctionName().lint(code)
 
     findings shouldHaveSize 1
   }
@@ -84,7 +84,7 @@ class ComposeFunctionNameTest : ShouldSpec({
       fun Test(modifier: Modifier): Int = 3
     """.trimIndent()
 
-    val findings = ComposeFunctionName().lint(code)
+    val findings = ComposableFunctionName().lint(code)
 
     findings shouldHaveSize 1
   }
@@ -98,7 +98,7 @@ class ComposeFunctionNameTest : ShouldSpec({
       }
     """.trimIndent()
 
-    val findings = ComposeFunctionName().lint(code)
+    val findings = ComposableFunctionName().lint(code)
 
     findings shouldHaveSize 1
   }
@@ -110,7 +110,7 @@ class ComposeFunctionNameTest : ShouldSpec({
       fun test(modifier: Modifier) = 3
     """.trimIndent()
 
-    val findings = ComposeFunctionName().lint(code)
+    val findings = ComposableFunctionName().lint(code)
 
     findings.shouldBeEmpty()
   }
@@ -122,7 +122,7 @@ class ComposeFunctionNameTest : ShouldSpec({
       fun test(modifier: Modifier): Int = 3
     """.trimIndent()
 
-    val findings = ComposeFunctionName().lint(code)
+    val findings = ComposableFunctionName().lint(code)
 
     findings.shouldBeEmpty()
   }
@@ -136,7 +136,7 @@ class ComposeFunctionNameTest : ShouldSpec({
       }
     """.trimIndent()
 
-    val findings = ComposeFunctionName().lint(code)
+    val findings = ComposableFunctionName().lint(code)
 
     findings.shouldBeEmpty()
   }

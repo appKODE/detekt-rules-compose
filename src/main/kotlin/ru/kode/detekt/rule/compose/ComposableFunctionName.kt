@@ -46,7 +46,7 @@ import org.jetbrains.kotlin.psi.KtNamedFunction
  *
  * **See also: [Compose api guidelines](https://github.com/androidx/androidx/blob/androidx-main/compose/docs/compose-api-guidelines.md#naming-unit-composable-functions-as-entities)
  */
-class ComposeFunctionName(config: Config = Config.empty) : Rule(config) {
+class ComposableFunctionName(config: Config = Config.empty) : Rule(config) {
   override val issue = Issue(
     javaClass.simpleName,
     Severity.Defect,
