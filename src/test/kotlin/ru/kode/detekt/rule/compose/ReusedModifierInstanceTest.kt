@@ -144,4 +144,42 @@ internal fun CollapsableHeader(
 
     findings.shouldBeEmpty()
   }
+
+  should("report when modifier is reused in a call wrapped in a conditional expression") {
+    // language=kotlin
+    val code = """
+@Composable
+internal fun Test(
+  value: String?,
+  value2: String?,
+  modifier: Modifier = Modifier
+) {
+  Column(
+    modifier = modifier,
+  ) {
+    if (value != null) {
+      Row(
+        modifier = Modifier.padding(16.dp),
+      ) {
+        Column(
+          modifier = Modifier
+            .padding(top = 8.dp)
+        ) {
+          if (value2 != null) {
+            Text(
+              modifier = modifier,
+              text = value2,
+            )
+          }
+        }
+      }
+    }
+  }
+}
+    """.trimIndent()
+
+    val findings = ReusedModifierInstance().lint(code)
+
+    findings shouldHaveSize 1
+  }
 })

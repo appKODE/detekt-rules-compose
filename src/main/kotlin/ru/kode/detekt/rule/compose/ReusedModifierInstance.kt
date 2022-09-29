@@ -67,9 +67,7 @@ class ReusedModifierInstance(config: Config = Config.empty) : Rule(config) {
     override fun visitCallExpression(expression: KtCallExpression) {
       val contentLambdaExpression = expression.valueArguments.find { it.getArgumentExpression() is KtLambdaExpression }
         ?.getArgumentExpression() as KtLambdaExpression?
-      contentLambdaExpression?.bodyExpression?.getChildrenOfType<KtCallExpression>()?.forEach {
-        it.accept(ChildrenWithModifiersVisitor())
-      }
+      contentLambdaExpression?.bodyExpression?.accept(ChildrenWithModifiersVisitor())
     }
   }
 
