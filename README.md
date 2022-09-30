@@ -1,24 +1,22 @@
 # Detekt rules for Jetpack Compose
 
-[![MavenCentral](https://img.shields.io/maven-central/v/ru.kode/detekt-rules-compose?versionPrefix=1.2.1)](https://search.maven.org/artifact/ru.kode/detekt-rules-compose)
+[![MavenCentral](https://img.shields.io/maven-central/v/ru.kode/detekt-rules-compose?versionPrefix=1.2.2)](https://search.maven.org/artifact/ru.kode/detekt-rules-compose)
 
 A set of [Detekt](https://detekt.dev) rules to help prevent common errors in projects using Jetpack Compose.
 
 # Rules
 
-Short summary of the rules in this rule set:
+Here are some highlights of rules in this rule set:
 
 - `ReusedModifierInstance` finds usages of `modifier` parameter on non-top-level children of a composable function. This tends to happen during refactorings and often leads to incorrect rendering of a composable
 
-
 - `UnnecessaryEventHandlerParameter` suggests hoisting event argument passing to the upper level which often simplifies individual composable components
 
+- `ModifierHeightWithText` suggests using `Modifier.heightIn()` instead of `Modifier.height()` on a layouts which have `Text` children, so that if the text turns out to be long and would wrap, layout will not cut it off
 
 - `ComposableEventParameterNaming` ensures that all event handler parameters of composable functions are named in the same Compose-like style, i.e. they have `on` prefix and do not use past tense
 
 - `ComposableParametersOrdering` suggests separating required an optional parameters of the composable function into groups
-
-- `ModifierHeightWithText` suggests using `Modifier.heightIn()` instead of `Modifier.height()` on a layouts which have `Text` children, so that if the text turns out to be long and would wrap, layout will not cut it off
 
 
 - `ModifierParameterPosition` ensures that `modifier` is declared as a first parameter
@@ -31,6 +29,8 @@ Short summary of the rules in this rule set:
 
 - `TopLevelComposableFunctions` ensures that all composable functions are top-level functions (disabled by default)
 
+- and others...
+
 Rules can be individually turned `on` or `off` in the configuration file.  
 More detailed rule descriptions with code snippets can be found in the [Wiki](https://github.com/appKODE/detekt-rules-compose/wiki).
 
@@ -39,7 +39,7 @@ More detailed rule descriptions with code snippets can be found in the [Wiki](ht
 Add detekt rules plugin in your `build.gradle` (or use any other [supported method](https://detekt.dev/docs/introduction/extensions#let-detekt-know-about-your-extensions)):
 ```
 dependencies {
-  detektPlugins("ru.kode:detekt-rules-compose:1.2.1")
+  detektPlugins("ru.kode:detekt-rules-compose:1.2.2")
 }
 ```
 and then add this configuration section to your `detekt-config.yml` to activate the rules:
@@ -64,6 +64,8 @@ compose:
   PublicComposablePreview:
     active: true
   TopLevelComposableFunctions:
+    active: true
+  ComposeFunctionName:
     active: true
 ```
 
