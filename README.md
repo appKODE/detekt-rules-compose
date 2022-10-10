@@ -18,7 +18,6 @@ Here are some highlights of rules in this rule set:
 
 - `ComposableParametersOrdering` suggests separating required an optional parameters of the composable function into groups
 
-
 - `ModifierParameterPosition` ensures that `modifier` is declared as a first parameter
 
 - `ModifierDefaultValue` ensures that `modifier` parameter has a correct default value
@@ -28,6 +27,8 @@ Here are some highlights of rules in this rule set:
 - `PublicComposablePreview` finds and reports composable previews which are not marked as `private`
 
 - `TopLevelComposableFunctions` ensures that all composable functions are top-level functions (disabled by default)
+
+- `ComposeFunctionName` ensures that Composable functions which return Unit should start with upper-case while the ones that return a value should start with lower case
 
 - and others...
 
