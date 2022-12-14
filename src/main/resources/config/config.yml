@@ -22,3 +22,5 @@ compose:
     active: false
   ComposableFunctionName:
     active: true
+  UnnecessaryLayoutWrapper:
+    active: true
