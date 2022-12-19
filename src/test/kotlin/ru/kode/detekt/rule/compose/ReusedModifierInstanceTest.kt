@@ -196,4 +196,30 @@ internal fun Test(
 
     findings shouldHaveSize 1
   }
+
+  should("not report when nested composable calls has no modifier argument") {
+    // language=kotlin
+    val code = """
+@Composable
+fun ProvideWindowInsets(content: @Composable () -> Unit) = Unit
+fun ProvideFooBar(content: @Composable () -> Unit) = Unit
+@Composable
+internal fun Test(
+  modifier: Modifier = Modifier
+) {
+  ProvideWindowInsets {
+    ProvideFooBar {
+      Column(
+        modifier = modifier,
+      ) {
+      }
+    }
+  }
+}
+    """.trimIndent()
+
+    val findings = ReusedModifierInstance().compileAndLintWithContext(env, code)
+
+    findings.shouldBeEmpty()
+  }
 })
