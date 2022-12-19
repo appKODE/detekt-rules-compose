@@ -11,6 +11,7 @@ import io.gitlab.arturbosch.detekt.api.Entity
 import io.gitlab.arturbosch.detekt.api.Issue
 import io.gitlab.arturbosch.detekt.api.Rule
 import io.gitlab.arturbosch.detekt.api.Severity
+import io.gitlab.arturbosch.detekt.api.internal.RequiresTypeResolution
 import io.gitlab.arturbosch.detekt.rules.hasAnnotation
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
@@ -46,6 +47,7 @@ import ru.kode.detekt.rule.compose.node.isModifier
  * }
  * ```
  */
+@RequiresTypeResolution
 class ReusedModifierInstance(config: Config = Config.empty) : Rule(config) {
   override val issue = Issue(
     javaClass.simpleName,

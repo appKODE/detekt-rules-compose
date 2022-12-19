@@ -3,33 +3,47 @@
  */
 package ru.kode.detekt.rule.compose
 
-import io.gitlab.arturbosch.detekt.test.lint
+import io.github.detekt.test.utils.createEnvironment
+import io.gitlab.arturbosch.detekt.test.compileAndLintWithContext
 import io.kotest.core.spec.style.ShouldSpec
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
+import org.jetbrains.kotlin.cli.jvm.compiler.KotlinCoreEnvironment
 
 class ReusedModifierInstanceTest : ShouldSpec({
+
+  val envWrapper = createEnvironment()
+  val env: KotlinCoreEnvironment = envWrapper.env
+
+  afterSpec { envWrapper.dispose() }
+
   should("error on wrong modifier on grand-children") {
     // language=kotlin
     val code = """
+      annotation class Composable
+      class Modifier {
+        fun weight(v: Float): Modifier { TODO() }
+      }
+      enum class Alignment { CenterVertically }
+
+      @Composable fun Row(modifier: Modifier = Modifier(), verticalAlignment: Alignment, content: () -> Unit) {}
+      @Composable fun Text(modifier: Modifier = Modifier(), text: String) {}
+
       @Composable
       fun Test(modifier: Modifier, value: Int) {
         Row(
           modifier = modifier,
           verticalAlignment = Alignment.CenterVertically
         ) {
-          val color = Color.White
           Text(
             modifier = modifier.weight(1f), // should be Modifier
-            style = DomInvestTheme.typography.caption2,
-            color = color,
-            text = props.title,
+            text = "hello",
           )
         }
       }
     """.trimIndent()
 
-    val findings = ReusedModifierInstance().lint(code)
+    val findings = ReusedModifierInstance().compileAndLintWithContext(env, code)
 
     findings shouldHaveSize 1
   }
@@ -49,7 +63,7 @@ class ReusedModifierInstanceTest : ShouldSpec({
       }
     """.trimIndent()
 
-    val findings = ReusedModifierInstance().lint(code)
+    val findings = ReusedModifierInstance().compileAndLintWithContext(env, code)
 
     findings shouldHaveSize 1
   }
@@ -88,7 +102,7 @@ internal fun SummaryRow(
 }
     """.trimIndent()
 
-    val findings = ReusedModifierInstance().lint(code)
+    val findings = ReusedModifierInstance().compileAndLintWithContext(env, code)
 
     findings.shouldBeEmpty()
   }
@@ -114,7 +128,7 @@ internal fun CollapsableHeader(
 }
     """.trimIndent()
 
-    val findings = ReusedModifierInstance().lint(code)
+    val findings = ReusedModifierInstance().compileAndLintWithContext(env, code)
 
     findings shouldHaveSize 1
   }
@@ -140,7 +154,7 @@ internal fun CollapsableHeader(
 }
     """.trimIndent()
 
-    val findings = ReusedModifierInstance().lint(code)
+    val findings = ReusedModifierInstance().compileAndLintWithContext(env, code)
 
     findings.shouldBeEmpty()
   }
@@ -178,7 +192,7 @@ internal fun Test(
 }
     """.trimIndent()
 
-    val findings = ReusedModifierInstance().lint(code)
+    val findings = ReusedModifierInstance().compileAndLintWithContext(env, code)
 
     findings shouldHaveSize 1
   }

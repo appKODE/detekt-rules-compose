@@ -25,6 +25,7 @@ tasks.withType<KotlinCompile> {
 
 tasks.withType<Test> {
   useJUnitPlatform()
+  systemProperty("compile-snippet-tests", true)
   testLogging {
     showExceptions = true
     showStandardStreams = true
