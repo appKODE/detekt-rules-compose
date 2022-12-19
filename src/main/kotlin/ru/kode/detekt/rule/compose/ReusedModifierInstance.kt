@@ -11,7 +11,10 @@ import io.gitlab.arturbosch.detekt.api.Entity
 import io.gitlab.arturbosch.detekt.api.Issue
 import io.gitlab.arturbosch.detekt.api.Rule
 import io.gitlab.arturbosch.detekt.api.Severity
+import io.gitlab.arturbosch.detekt.api.internal.RequiresTypeResolution
+import io.gitlab.arturbosch.detekt.rules.fqNameOrNull
 import io.gitlab.arturbosch.detekt.rules.hasAnnotation
+import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
 import org.jetbrains.kotlin.psi.KtExpression
@@ -19,6 +22,8 @@ import org.jetbrains.kotlin.psi.KtLambdaExpression
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.KtReferenceExpression
 import org.jetbrains.kotlin.psi.psiUtil.getChildrenOfType
+import org.jetbrains.kotlin.resolve.calls.model.ResolvedCall
+import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import ru.kode.detekt.rule.compose.node.isModifier
 
 /**
@@ -46,7 +51,12 @@ import ru.kode.detekt.rule.compose.node.isModifier
  * }
  * ```
  */
-class ReusedModifierInstance(config: Config = Config.empty) : Rule(config) {
+@RequiresTypeResolution
+class ReusedModifierInstance(
+  config: Config = Config.empty,
+  // other value is used in tests
+  private val modifierClassPackage: String = "androidx.compose.ui"
+) : Rule(config) {
   override val issue = Issue(
     javaClass.simpleName,
     Severity.Defect,
@@ -65,9 +75,18 @@ class ReusedModifierInstance(config: Config = Config.empty) : Rule(config) {
 
   private inner class ChildComposableCallsVisitor : DetektVisitor() {
     override fun visitCallExpression(expression: KtCallExpression) {
-      val contentLambdaExpression = expression.valueArguments.find { it.getArgumentExpression() is KtLambdaExpression }
-        ?.getArgumentExpression() as KtLambdaExpression?
-      contentLambdaExpression?.bodyExpression?.accept(ChildrenWithModifiersVisitor())
+      if (expression.getResolvedCall(bindingContext)?.hasModifierParameter() == true) {
+        val contentLambdaExpression = expression.valueArguments
+          .find { it.getArgumentExpression() is KtLambdaExpression }
+          ?.getArgumentExpression() as KtLambdaExpression?
+        contentLambdaExpression?.bodyExpression?.accept(ChildrenWithModifiersVisitor())
+      } else {
+        super.visitCallExpression(expression)
+      }
+    }
+
+    private fun ResolvedCall<out CallableDescriptor>.hasModifierParameter(): Boolean {
+      return this.valueArguments.any { it.key.type.fqNameOrNull()?.asString() == "$modifierClassPackage.Modifier" }
     }
   }
 

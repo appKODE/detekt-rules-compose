@@ -3,40 +3,49 @@
  */
 package ru.kode.detekt.rule.compose
 
-import io.gitlab.arturbosch.detekt.test.lint
+import io.github.detekt.test.utils.createEnvironment
+import io.gitlab.arturbosch.detekt.test.compileAndLintWithContext
 import io.kotest.core.spec.style.ShouldSpec
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
+import org.jetbrains.kotlin.cli.jvm.compiler.KotlinCoreEnvironment
+import ru.kode.detekt.rule.compose.snippet.composeSnippet
 
 class ReusedModifierInstanceTest : ShouldSpec({
+
+  val envWrapper = createEnvironment()
+  val env: KotlinCoreEnvironment = envWrapper.env
+
+  afterSpec { envWrapper.dispose() }
+
   should("error on wrong modifier on grand-children") {
     // language=kotlin
-    val code = """
+    val code = composeSnippet(
+      """
       @Composable
       fun Test(modifier: Modifier, value: Int) {
         Row(
           modifier = modifier,
           verticalAlignment = Alignment.CenterVertically
         ) {
-          val color = Color.White
           Text(
             modifier = modifier.weight(1f), // should be Modifier
-            style = DomInvestTheme.typography.caption2,
-            color = color,
-            text = props.title,
+            text = "hello",
           )
         }
       }
-    """.trimIndent()
+      """.trimIndent()
+    )
 
-    val findings = ReusedModifierInstance().lint(code)
+    val findings = createRule().compileAndLintWithContext(env, code)
 
     findings shouldHaveSize 1
   }
 
   should("error on wrong modifier on grand-grand-children") {
     // language=kotlin
-    val code = """
+    val code = composeSnippet(
+      """
       @Composable
       fun Test(modifier: Modifier, value: Int) {
         Row(
@@ -47,57 +56,53 @@ class ReusedModifierInstanceTest : ShouldSpec({
           }
         }
       }
-    """.trimIndent()
+      """.trimIndent()
+    )
 
-    val findings = ReusedModifierInstance().lint(code)
+    val findings = createRule().compileAndLintWithContext(env, code)
 
     findings shouldHaveSize 1
   }
 
   should("not error on modifier on direct children") {
     // language=kotlin
-    val code = """
+    val code = composeSnippet(
+      """
+data class SummaryRowProps(val title: String, val value: String)
 @Composable
-internal fun SummaryRow(
+fun SummaryRow(
   modifier: Modifier = Modifier,
   props: SummaryRowProps,
 ) {
   Row(
     modifier = modifier
-      .heightIn(min = 24.dp)
       .padding(horizontal = 16.dp, vertical = 4.dp),
     verticalAlignment = Alignment.CenterVertically
   ) {
-    val color = when (props.style) {
-      SummaryRowProps.Style.Normal -> DomInvestTheme.colors.textSecondary
-      SummaryRowProps.Style.Warning -> DomInvestTheme.colors.indicatorContentRed
-    }
     Text(
       modifier = Modifier.weight(1f),
-      style = DomInvestTheme.typography.caption2,
-      color = color,
       text = props.title,
     )
     Text(
       modifier = Modifier,
-      style = DomInvestTheme.typography.caption2,
-      color = color,
       text = props.value,
     )
   }
 }
-    """.trimIndent()
+      """.trimIndent()
+    )
 
-    val findings = ReusedModifierInstance().lint(code)
+    val findings = createRule().compileAndLintWithContext(env, code)
 
     findings.shouldBeEmpty()
   }
 
   should("error on modifier without expression chain") {
     // language=kotlin
-    val code = """
+    val code = composeSnippet(
+      """
 @Composable
-internal fun CollapsableHeader(
+fun CollapsableHeader(
   modifier: Modifier = Modifier,
   title: String,
   isExpanded: Boolean,
@@ -112,18 +117,20 @@ internal fun CollapsableHeader(
     }
   }
 }
-    """.trimIndent()
+      """.trimIndent()
+    )
 
-    val findings = ReusedModifierInstance().lint(code)
+    val findings = createRule().compileAndLintWithContext(env, code)
 
     findings shouldHaveSize 1
   }
 
   should("not error on Modifier without expression chain") {
     // language=kotlin
-    val code = """
+    val code = composeSnippet(
+      """
 @Composable
-internal fun CollapsableHeader(
+fun CollapsableHeader(
   modifier: Modifier = Modifier,
   title: String,
   isExpanded: Boolean,
@@ -138,18 +145,20 @@ internal fun CollapsableHeader(
     }
   }
 }
-    """.trimIndent()
+      """.trimIndent()
+    )
 
-    val findings = ReusedModifierInstance().lint(code)
+    val findings = createRule().compileAndLintWithContext(env, code)
 
     findings.shouldBeEmpty()
   }
 
   should("report when modifier is reused in a call wrapped in a conditional expression") {
     // language=kotlin
-    val code = """
+    val code = composeSnippet(
+      """
 @Composable
-internal fun Test(
+fun Test(
   value: String?,
   value2: String?,
   modifier: Modifier = Modifier
@@ -163,7 +172,7 @@ internal fun Test(
       ) {
         Column(
           modifier = Modifier
-            .padding(top = 8.dp)
+            .padding(8.dp)
         ) {
           if (value2 != null) {
             Text(
@@ -176,10 +185,69 @@ internal fun Test(
     }
   }
 }
-    """.trimIndent()
+      """.trimIndent()
+    )
 
-    val findings = ReusedModifierInstance().lint(code)
+    val findings = createRule().compileAndLintWithContext(env, code)
+
+    findings shouldHaveSize 1
+  }
+
+  should("not report when nested composable calls has no modifier argument") {
+    // language=kotlin
+    val code = composeSnippet(
+      """
+@Composable
+fun ProvideWindowInsets(content: @Composable () -> Unit) = Unit
+fun ProvideFooBar(content: @Composable () -> Unit) = Unit
+@Composable
+fun Test(
+  modifier: Modifier = Modifier
+) {
+  ProvideWindowInsets {
+    ProvideFooBar {
+      Column(
+        modifier = modifier,
+      ) {
+      }
+    }
+  }
+}
+      """.trimIndent()
+    )
+
+    val findings = createRule().compileAndLintWithContext(env, code)
+
+    findings.shouldBeEmpty()
+  }
+
+  should("report when top composable call has no modifier argument, but its reused in its children") {
+    // language=kotlin
+    val code = composeSnippet(
+      """
+@Composable
+fun ProvideWindowInsets(content: @Composable () -> Unit) = Unit
+fun ProvideFooBar(modifier: Modifier = Modifier, content: @Composable () -> Unit) = Unit
+@Composable
+fun Test(
+  modifier: Modifier = Modifier
+) {
+  ProvideWindowInsets {
+    ProvideFooBar {
+      Column(
+        modifier = modifier,
+      ) {
+      }
+    }
+  }
+}
+      """.trimIndent()
+    )
+
+    val findings = createRule().compileAndLintWithContext(env, code)
 
     findings shouldHaveSize 1
   }
 })
+
+private fun createRule() = ReusedModifierInstance(modifierClassPackage = "ru.kode.detekt.rule")
