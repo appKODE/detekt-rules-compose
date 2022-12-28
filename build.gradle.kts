@@ -2,7 +2,7 @@ import org.jetbrains.dokka.gradle.DokkaTask
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
-  kotlin("jvm") version "1.6.20"
+  kotlin("jvm") version "1.7.21"
   `maven-publish`
   signing
   alias(libs.plugins.spotless)
@@ -140,7 +140,9 @@ spotless {
     targetExclude("!**/build/**/*.*")
     ktlint(libs.versions.ktlint.get())
       .setUseExperimental(true)
-      .userData(mapOf("indent_size" to "2", "max_line_length" to "120"))
+      .editorConfigOverride(
+        mapOf("indent_size" to "2", "max_line_length" to "120")
+      )
     trimTrailingWhitespace()
     endWithNewline()
   }
@@ -149,7 +151,9 @@ spotless {
     target("**/*.gradle.kts")
     ktlint(libs.versions.ktlint.get())
       .setUseExperimental(true)
-      .userData(mapOf("indent_size" to "2", "max_line_length" to "120"))
+      .editorConfigOverride(
+        mapOf("indent_size" to "2", "max_line_length" to "120")
+      )
     trimTrailingWhitespace()
     endWithNewline()
   }
