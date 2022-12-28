@@ -87,7 +87,7 @@ class ModifierHeightWithText(config: Config = Config.empty) : Rule(config) {
     }
 
     private fun reportError(node: KtValueArgument) {
-      val heightCall = node.findDescendantOfType<KtCallExpression>() { it.calleeExpression?.text == "height" }
+      val heightCall = node.findDescendantOfType<KtCallExpression> { it.calleeExpression?.text == "height" }
         ?: error("didn't find height-call node")
       report(
         CodeSmell(
