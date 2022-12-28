@@ -4,6 +4,7 @@ koTest = "5.5.4"
 ktlint = "0.43.2"
 spotless = "6.5.2"
 dokka = "1.5.31"
+compose = "1.2.2"
 
 [libraries]
 detekt-api = { module = "io.gitlab.arturbosch.detekt:detekt-api", version.ref = "detekt" }
@@ -12,6 +13,9 @@ kotest-junit-runner = { module = "io.kotest:kotest-runner-junit5", version.ref =
 kotest-assertions-core = { module = "io.kotest:kotest-assertions-core", version.ref = "koTest" }
 kotest-property = { module = "io.kotest:kotest-property", version.ref = "koTest" }
 ktlint = { module = "com.pinterest:ktlint", version.ref = "ktlint" }
+composeRuntime = { module = "org.jetbrains.compose.runtime:runtime", version.ref = "compose" }
+composeUi = { module = "org.jetbrains.compose.ui:ui", version.ref = "compose" }
+composeFoundation = { module = "org.jetbrains.compose.foundation:foundation", version.ref = "compose" }
 
 [bundles]
 koTest = [ "kotest-junit-runner", "kotest-assertions-core", "kotest-property" ]

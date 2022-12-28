@@ -3,6 +3,7 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
   kotlin("jvm") version "1.7.20"
+  id("org.jetbrains.compose") version "1.2.2"
   `maven-publish`
   signing
   alias(libs.plugins.spotless)
@@ -11,16 +12,32 @@ plugins {
 
 repositories {
   mavenCentral()
+  google()
+  maven("https://maven.pkg.jetbrains.space/public/p/compose/dev")
+}
+
+buildscript {
+  repositories {
+    mavenCentral()
+    google()
+  }
 }
 
 dependencies {
   compileOnly(libs.detekt.api)
   testImplementation(libs.detekt.test)
   testImplementation(libs.bundles.koTest)
+//  testImplementation(libs.composeUi)
+//  testImplementation(libs.composeFoundation)
+//  testImplementation(libs.composeRuntime)
+  implementation(compose.desktop.currentOs)
+  implementation(compose.runtime)
+  testImplementation(compose.desktop.currentOs)
+  testImplementation(compose.runtime)
 }
 
 tasks.withType<KotlinCompile> {
-  kotlinOptions.jvmTarget = "1.8"
+  kotlinOptions.jvmTarget = "11"
 }
 
 tasks.withType<Test> {
