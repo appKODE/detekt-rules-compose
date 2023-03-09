@@ -35,7 +35,9 @@ fun composeSnippet(code: String): String {
       @Composable fun Row(modifier: Modifier = Modifier, verticalAlignment: Alignment = Alignment.CenterVertically, content: () -> Unit) {}
       @Composable fun Column(modifier: Modifier = Modifier, verticalAlignment: Alignment = Alignment.CenterVertically, content: () -> Unit) {}
       @Composable fun Box(modifier: Modifier = Modifier, content: () -> Unit) {}
-      @Composable fun Text(modifier: Modifier = Modifier, text: String) {}
+      @Composable fun Text(text: String, modifier: Modifier = Modifier) {}
+      @Composable fun Button(onClick: (String) -> Unit, content: () -> Unit) {}
+
 
       $code
   """.trimIndent()

@@ -12,7 +12,9 @@ import io.gitlab.arturbosch.detekt.api.Issue
 import io.gitlab.arturbosch.detekt.api.Location
 import io.gitlab.arturbosch.detekt.api.Rule
 import io.gitlab.arturbosch.detekt.api.Severity
+import io.gitlab.arturbosch.detekt.api.internal.RequiresTypeResolution
 import io.gitlab.arturbosch.detekt.rules.hasAnnotation
+import org.jetbrains.kotlin.descriptors.isSealed
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
 import org.jetbrains.kotlin.psi.KtFunctionType
@@ -20,6 +22,7 @@ import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.KtParameter
 import org.jetbrains.kotlin.psi.KtTypeReference
+import org.jetbrains.kotlin.resolve.calls.util.getType
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstance
 import ru.kode.detekt.rule.compose.node.isEventHandler
 
@@ -58,6 +61,7 @@ import ru.kode.detekt.rule.compose.node.isEventHandler
  * }
  * ```
  */
+@RequiresTypeResolution
 class UnnecessaryEventHandlerParameter(config: Config = Config.empty) : Rule(config) {
   override val issue = Issue(
     javaClass.simpleName,
@@ -99,7 +103,13 @@ class UnnecessaryEventHandlerParameter(config: Config = Config.empty) : Rule(con
           val argumentReceiverName = when {
             argumentExpression is KtDotQualifiedExpression &&
               argumentExpression.lastChild !is KtCallExpression -> {
-              argumentExpression.text.takeWhile { it != '.' }
+              val hasSealedParent = (argumentExpression.receiverExpression.getType(bindingContext))
+                ?.run { constructor.supertypes.firstOrNull()?.constructor?.declarationDescriptor?.isSealed() } == true
+              if (!hasSealedParent) {
+                argumentExpression.text.takeWhile { it != '.' }
+              } else {
+                null
+              }
             }
             argumentExpression is KtNameReferenceExpression -> argument.text
             else -> null
