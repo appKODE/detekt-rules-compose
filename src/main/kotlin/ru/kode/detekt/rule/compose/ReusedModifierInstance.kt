@@ -54,7 +54,7 @@ import ru.kode.detekt.rule.compose.node.isModifier
 @RequiresTypeResolution
 class ReusedModifierInstance(
   config: Config = Config.empty,
-  // other value is used in tests
+  // this parameter is used in tests to pass another package
   private val modifierClassPackage: String = "androidx.compose.ui"
 ) : Rule(config) {
   override val issue = Issue(
