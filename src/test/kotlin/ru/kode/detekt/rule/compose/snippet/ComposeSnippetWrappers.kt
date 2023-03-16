@@ -32,11 +32,11 @@ fun composeSnippet(code: String): String {
       }
       enum class Alignment { CenterVertically }
 
-      @Composable fun Row(modifier: Modifier = Modifier, verticalAlignment: Alignment = Alignment.CenterVertically, content: () -> Unit) {}
-      @Composable fun Column(modifier: Modifier = Modifier, verticalAlignment: Alignment = Alignment.CenterVertically, content: () -> Unit) {}
-      @Composable fun Box(modifier: Modifier = Modifier, content: () -> Unit) {}
+      @Composable fun Row(modifier: Modifier = Modifier, verticalAlignment: Alignment = Alignment.CenterVertically, content: @Composable () -> Unit) {}
+      @Composable fun Column(modifier: Modifier = Modifier, verticalAlignment: Alignment = Alignment.CenterVertically, content: @Composable () -> Unit) {}
+      @Composable fun Box(modifier: Modifier = Modifier, content: @Composable () -> Unit) {}
       @Composable fun Text(text: String, modifier: Modifier = Modifier) {}
-      @Composable fun Button(onClick: (String) -> Unit, content: () -> Unit) {}
+      @Composable fun Button(onClick: (String) -> Unit, content: @Composable () -> Unit) {}
 
 
       $code

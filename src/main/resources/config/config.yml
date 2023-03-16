@@ -22,3 +22,6 @@ compose:
     active: false
   ComposableFunctionName:
     active: true
+  ConditionCouldBeLifted:
+    active: true
+    ignoreCallsWithArgumentNames: [ 'modifier' ]

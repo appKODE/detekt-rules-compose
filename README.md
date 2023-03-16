@@ -68,6 +68,8 @@ compose:
     active: true
   ComposableFunctionName:
     active: true
+  ConditionCouldBeLifted:
+    active: true
 ```
 
 ## Detekt configuration for Compose
