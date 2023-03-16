@@ -1,5 +1,5 @@
 [versions]
-detekt = "1.20.0"
+detekt = "1.22.0"
 koTest = "5.5.4"
 ktlint = "0.47.1"
 spotless = "6.12.0"
