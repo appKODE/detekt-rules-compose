@@ -124,7 +124,7 @@ class ComposableParametersOrderingTest : ShouldSpec(
         }
         """.trimIndent()
 
-        val findings = ComposableParametersOrdering().lint(code)
+        ComposableParametersOrdering().lint(code)
 
         fail("should this be permitted?")
       }
@@ -142,7 +142,7 @@ class ComposableParametersOrderingTest : ShouldSpec(
         }
         """.trimIndent()
 
-        val findings = ComposableParametersOrdering().lint(code)
+        ComposableParametersOrdering().lint(code)
 
         fail("should this be permitted?")
       }
@@ -161,7 +161,7 @@ class ComposableParametersOrderingTest : ShouldSpec(
         }
         """.trimIndent()
 
-        val findings = ComposableParametersOrdering().lint(code)
+        ComposableParametersOrdering().lint(code)
 
         // This situation would likely confuse users too:
         // "what are the rules actually? are we splitting optional/required or are we not?"
@@ -181,7 +181,7 @@ class ComposableParametersOrderingTest : ShouldSpec(
         }
         """.trimIndent()
 
-        val findings = ComposableParametersOrdering().lint(code)
+        ComposableParametersOrdering().lint(code)
 
         fail("should this be permitted?")
       }
@@ -199,7 +199,7 @@ class ComposableParametersOrderingTest : ShouldSpec(
         }
         """.trimIndent()
 
-        val findings = ComposableParametersOrdering().lint(code)
+        ComposableParametersOrdering().lint(code)
 
         fail("should this be permitted?")
       }
