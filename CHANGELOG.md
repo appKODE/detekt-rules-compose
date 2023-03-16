@@ -3,7 +3,7 @@
 ## 1.2.2 - 2022-09-30
 
 * New rule: `ComposeFunctionName` ensures that Composable functions which return Unit should start with upper-case while the ones that return a value should start with lower case
-* Improve `ReusedModifierInstance` to detekt more cases, now it works correclty for cases when a composable call is wrapped in conditional (and other expressions)
+* Improve `ReusedModifierInstance` to detekt more cases, now it works correctly for cases when a composable call is wrapped in conditional (and other expressions)
 
 ## 1.2.1 - 2022-08-14
 
