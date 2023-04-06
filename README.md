@@ -70,6 +70,10 @@ compose:
     active: true
 ```
 
+## Detekt configuration for Compose
+
+Detekt manual contains few useful tips on how to configure Detekt in Compose-based projects, [check them out](https://detekt.dev/docs/introduction/compose/)!
+
 # Contributors
 
 Maintained by [KODE](https://kode.ru) and [Contributors](https://github.com/appKODE/detekt-rules-compose/graphs/contributors) ❤️
