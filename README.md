@@ -28,7 +28,7 @@ Here are some highlights of rules in this rule set:
 
 - `TopLevelComposableFunctions` ensures that all composable functions are top-level functions (disabled by default)
 
-- `ComposeFunctionName` ensures that Composable functions which return Unit should start with upper-case while the ones that return a value should start with lower case
+- `ComposableFunctionName` ensures that Composable functions which return Unit should start with upper-case while the ones that return a value should start with lower case
 
 - and others...
 
@@ -66,7 +66,7 @@ compose:
     active: true
   TopLevelComposableFunctions:
     active: true
-  ComposeFunctionName:
+  ComposableFunctionName:
     active: true
 ```
 
