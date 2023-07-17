@@ -3,13 +3,12 @@ package ru.kode.detekt.rule.compose.node
 import io.gitlab.arturbosch.detekt.rules.hasAnnotation
 import io.gitlab.arturbosch.detekt.rules.identifierName
 import org.jetbrains.kotlin.name.FqName
-import org.jetbrains.kotlin.psi.KtBlockExpression
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtFunctionType
 import org.jetbrains.kotlin.psi.KtParameter
 import org.jetbrains.kotlin.psi.KtTypeReference
-import org.jetbrains.kotlin.psi.psiUtil.getChildrenOfType
+import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 
@@ -44,13 +43,7 @@ fun KtExpression.hasComposableCallChildren(
   composableAnnotationClassPackage: String,
   bindingContext: BindingContext
 ): Boolean {
-  return when (this) {
-    is KtCallExpression -> this.isComposableCall(composableAnnotationClassPackage, bindingContext)
-    is KtBlockExpression -> {
-      this.getChildrenOfType<KtCallExpression>().any {
-        it.isComposableCall(composableAnnotationClassPackage, bindingContext)
-      }
-    }
-    else -> false
+  return this.collectDescendantsOfType<KtCallExpression>().any {
+    it.isComposableCall(composableAnnotationClassPackage, bindingContext)
   }
 }
