@@ -1,6 +1,6 @@
 # Detekt rules for Jetpack Compose
 
-[![MavenCentral](https://img.shields.io/maven-central/v/ru.kode/detekt-rules-compose?versionPrefix=1.2.2)](https://search.maven.org/artifact/ru.kode/detekt-rules-compose)
+[![MavenCentral](https://img.shields.io/maven-central/v/ru.kode/detekt-rules-compose?versionPrefix=1.3.0)](https://search.maven.org/artifact/ru.kode/detekt-rules-compose)
 
 A set of [Detekt](https://detekt.dev) rules to help prevent common errors in projects using Jetpack Compose.
 
@@ -40,7 +40,7 @@ More detailed rule descriptions with code snippets can be found in the [Wiki](ht
 Add detekt rules plugin in your `build.gradle` (or use any other [supported method](https://detekt.dev/docs/introduction/extensions#let-detekt-know-about-your-extensions)):
 ```
 dependencies {
-  detektPlugins("ru.kode:detekt-rules-compose:1.2.2")
+  detektPlugins("ru.kode:detekt-rules-compose:1.3.0")
 }
 ```
 and then add this configuration section to your `detekt-config.yml` to activate the rules:
@@ -70,6 +70,7 @@ compose:
     active: true
   ConditionCouldBeLifted:
     active: true
+    ignoreCallsWithArgumentNames: [ 'modifier', 'contentAlignment' ]
 ```
 
 ## Detekt configuration for Compose
