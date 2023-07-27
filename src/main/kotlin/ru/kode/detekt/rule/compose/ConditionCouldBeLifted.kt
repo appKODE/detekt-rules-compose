@@ -49,7 +49,7 @@ import ru.kode.detekt.rule.compose.node.isComposableCall
  * }
  * ```
  *
- * Use [ignoreCallsWithArgumentNames] config option to specify argument names which when present will make this rule
+ * Use [ignoreCallsWithArgumentNames] config option to specify argument names which (when present) will make this rule
  * ignore and skip those calls:
  *
  * ```
