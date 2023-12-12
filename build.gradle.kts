@@ -2,7 +2,7 @@ import org.jetbrains.dokka.gradle.DokkaTask
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
-  kotlin("jvm") version "1.7.21"
+  kotlin("jvm") version "1.9.10"
   `maven-publish`
   signing
   alias(libs.plugins.spotless)
@@ -17,10 +17,6 @@ dependencies {
   compileOnly(libs.detekt.api)
   testImplementation(libs.detekt.test)
   testImplementation(libs.bundles.koTest)
-}
-
-tasks.withType<KotlinCompile> {
-  kotlinOptions.jvmTarget = "1.8"
 }
 
 tasks.withType<Test> {
@@ -43,13 +39,8 @@ allprojects {
   apply(plugin = "org.jetbrains.dokka")
   apply(plugin = "signing")
 
-  tasks {
-    compileKotlin {
-      kotlinOptions.jvmTarget = "1.8"
-    }
-    compileTestKotlin {
-      kotlinOptions.jvmTarget = "1.8"
-    }
+  kotlin {
+    jvmToolchain(11)
   }
 
   val dokkaHtml by tasks.existing(DokkaTask::class)
@@ -140,7 +131,6 @@ spotless {
     target("**/*.kt")
     targetExclude("!**/build/**/*.*")
     ktlint(libs.versions.ktlint.get())
-      .setUseExperimental(true)
       .editorConfigOverride(
         mapOf("indent_size" to "2", "max_line_length" to "120")
       )
@@ -151,7 +141,6 @@ spotless {
   kotlinGradle {
     target("**/*.gradle.kts")
     ktlint(libs.versions.ktlint.get())
-      .setUseExperimental(true)
       .editorConfigOverride(
         mapOf("indent_size" to "2", "max_line_length" to "120")
       )

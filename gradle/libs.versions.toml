@@ -1,9 +1,9 @@
 [versions]
-detekt = "1.22.0"
-koTest = "5.5.4"
-ktlint = "0.47.1"
-spotless = "6.12.0"
-dokka = "1.5.31"
+detekt = "1.23.3"
+koTest = "5.8.0"
+ktlint = "1.0.1"
+spotless = "6.23.3"
+dokka = "1.9.10"
 
 [libraries]
 detekt-api = { module = "io.gitlab.arturbosch.detekt:detekt-api", version.ref = "detekt" }
