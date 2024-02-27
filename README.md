@@ -66,6 +66,7 @@ compose:
     active: true
   TopLevelComposableFunctions:
     active: true
+    allowInObjects: false
   ComposableFunctionName:
     active: true
   ConditionCouldBeLifted:
