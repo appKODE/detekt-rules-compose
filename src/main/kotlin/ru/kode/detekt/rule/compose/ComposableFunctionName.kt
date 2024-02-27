@@ -18,7 +18,7 @@ import org.jetbrains.kotlin.psi.KtNamedFunction
  * The Composable functions that return Unit should start with upper-case while the ones that return a value should
  * start with lower case.
  *
- * Wrong:
+ * Non-compliant:
  * ```
  * @Composable
  * fun button() {
@@ -33,12 +33,13 @@ import org.jetbrains.kotlin.psi.KtNamedFunction
  * }
  * ```
  *
- * Wrong:
+ * Non-compliant:
  * ```
  * @Composable
  * fun Value(): Int = ...
  * ```
- * Correct:
+
+ * Compliant:
  * ```
  * @Composable
  * fun value(): Int = ...
