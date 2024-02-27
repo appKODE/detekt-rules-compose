@@ -35,6 +35,10 @@ Here are some highlights of rules in this rule set:
 Rules can be individually turned `on` or `off` in the configuration file.  
 More detailed rule descriptions with code snippets can be found in the [Wiki](https://github.com/appKODE/detekt-rules-compose/wiki).
 
+# Running checks
+
+Some rules will only work if detekt is running in a [type resolution](https://detekt.dev/docs/gettingstarted/type-resolution) mode, so make sure [it is configured](https://detekt.dev/docs/gettingstarted/type-resolution#enabling-on-a-jvm-project) for your build if you want to make full use of them. 
+
 # Installation and configuration
 
 Add detekt rules plugin in your `build.gradle` (or use any other [supported method](https://detekt.dev/docs/introduction/extensions#let-detekt-know-about-your-extensions)):
