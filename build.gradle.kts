@@ -1,7 +1,7 @@
 import org.jetbrains.dokka.gradle.DokkaTask
 
 plugins {
-  kotlin("jvm") version "1.9.10"
+  kotlin("jvm") version "1.9.24"
   `maven-publish`
   signing
   alias(libs.plugins.spotless)
