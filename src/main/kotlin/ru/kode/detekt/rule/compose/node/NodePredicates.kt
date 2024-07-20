@@ -6,6 +6,7 @@ import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtFunctionType
+import org.jetbrains.kotlin.psi.KtNullableType
 import org.jetbrains.kotlin.psi.KtParameter
 import org.jetbrains.kotlin.psi.KtTypeReference
 import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
@@ -27,6 +28,15 @@ fun KtParameter.isEventHandler(): Boolean {
 
 fun KtParameter.isModifier(): Boolean {
   return identifierName() == "modifier"
+}
+
+fun KtParameter.isLambda(): Boolean {
+  val firstChild = this.children.first { it is KtTypeReference }
+  var firstChildType = (firstChild as KtTypeReference).typeElement
+  if (firstChildType is KtNullableType) {
+    firstChildType = firstChildType.innerType
+  }
+  return firstChildType is KtFunctionType
 }
 
 fun KtCallExpression.isComposableCall(

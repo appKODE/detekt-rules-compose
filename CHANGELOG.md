@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.4.0 - ?
+
+* Merge `ModifierParameterPosition` rule into the `ComposableParametersOrdering` rule. After upgrading to the new version of this ruleset, `ModifierParameterPosition` should be removed from `detekt-config.yml` file
+
 ## 1.3.0 - 2023-07-20
 
 * Several rules (`ReusedModifierInstance`, `UnnecessaryEventHandlerParameter`) were switched to run only when Detekt is working in a [type resolution mode](https://detekt.dev/docs/gettingstarted/type-resolution/). This is required to make these rules more robust and have less false positives (such as #5, #13). Expect more rules in this ruleset to support only running in the _type resolution_ mode
