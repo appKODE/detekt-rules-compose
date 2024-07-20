@@ -67,7 +67,7 @@ class UnnecessaryEventHandlerParameter(config: Config = Config.empty) : Rule(con
     javaClass.simpleName,
     Severity.Defect,
     "Checks for unnecessary event handler parameters",
-    Debt.FIVE_MINS
+    Debt.FIVE_MINS,
   )
 
   override fun visitNamedFunction(function: KtNamedFunction) {
@@ -80,13 +80,11 @@ class UnnecessaryEventHandlerParameter(config: Config = Config.empty) : Rule(con
     }
   }
 
-  private fun KtParameter.isStateParameter(): Boolean {
-    return !this.isEventHandler()
-  }
+  private fun KtParameter.isStateParameter(): Boolean = !this.isEventHandler()
 
   private inner class UnnecessaryHandlerArgumentsVisitor(
     private val stateParameters: List<KtParameter>,
-    private val eventParameters: List<KtParameter>
+    private val eventParameters: List<KtParameter>,
   ) : DetektVisitor() {
     private val stateParameterNames = stateParameters.map { it.name }
 
@@ -130,8 +128,8 @@ class UnnecessaryEventHandlerParameter(config: Config = Config.empty) : Rule(con
           Entity.from(eventParameter, Location.from(eventParameter)),
           "Unnecessary event callback arguments. Move all \"$argumentReceiverName\" access " +
             "to the parent composable event handler and switch \"${eventParameter.name}\" type to " +
-            "\"${parameterList.joinToString(prefix = "(", postfix = ")", transform = { it.text })} -> Unit\""
-        )
+            "\"${parameterList.joinToString(prefix = "(", postfix = ")", transform = { it.text })} -> Unit\"",
+        ),
       )
     }
   }

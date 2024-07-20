@@ -58,5 +58,5 @@ class ModifierDefaultValueTest : ShouldSpec(
 
       findings.shouldBeEmpty()
     }
-  }
+  },
 )

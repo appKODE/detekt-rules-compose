@@ -55,13 +55,13 @@ import ru.kode.detekt.rule.compose.node.isModifier
 class ReusedModifierInstance(
   config: Config = Config.empty,
   // this parameter is used in tests to pass another package
-  private val modifierClassPackage: String = "androidx.compose.ui"
+  private val modifierClassPackage: String = "androidx.compose.ui",
 ) : Rule(config) {
   override val issue = Issue(
     javaClass.simpleName,
     Severity.Defect,
     "Reports errors in using modifier on wrong level of composable hierarchy",
-    Debt.FIVE_MINS
+    Debt.FIVE_MINS,
   )
 
   override fun visitNamedFunction(function: KtNamedFunction) {
@@ -116,8 +116,8 @@ class ReusedModifierInstance(
         CodeSmell(
           issue,
           Entity.from(node),
-          "Composable uses \"modifier\" on the wrong level, non-direct children should use \"Modifier\""
-        )
+          "Composable uses \"modifier\" on the wrong level, non-direct children should use \"Modifier\"",
+        ),
       )
     }
   }

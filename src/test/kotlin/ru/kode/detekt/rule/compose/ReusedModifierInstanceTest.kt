@@ -34,7 +34,7 @@ class ReusedModifierInstanceTest : ShouldSpec({
           )
         }
       }
-      """.trimIndent()
+      """.trimIndent(),
     )
 
     val findings = createRule().compileAndLintWithContext(env, code)
@@ -56,7 +56,7 @@ class ReusedModifierInstanceTest : ShouldSpec({
           }
         }
       }
-      """.trimIndent()
+      """.trimIndent(),
     )
 
     val findings = createRule().compileAndLintWithContext(env, code)
@@ -89,7 +89,7 @@ fun SummaryRow(
     )
   }
 }
-      """.trimIndent()
+      """.trimIndent(),
     )
 
     val findings = createRule().compileAndLintWithContext(env, code)
@@ -117,7 +117,7 @@ fun CollapsableHeader(
     }
   }
 }
-      """.trimIndent()
+      """.trimIndent(),
     )
 
     val findings = createRule().compileAndLintWithContext(env, code)
@@ -145,7 +145,7 @@ fun CollapsableHeader(
     }
   }
 }
-      """.trimIndent()
+      """.trimIndent(),
     )
 
     val findings = createRule().compileAndLintWithContext(env, code)
@@ -185,7 +185,7 @@ fun Test(
     }
   }
 }
-      """.trimIndent()
+      """.trimIndent(),
     )
 
     val findings = createRule().compileAndLintWithContext(env, code)
@@ -213,7 +213,7 @@ fun Test(
     }
   }
 }
-      """.trimIndent()
+      """.trimIndent(),
     )
 
     val findings = createRule().compileAndLintWithContext(env, code)
@@ -241,7 +241,7 @@ fun Test(
     }
   }
 }
-      """.trimIndent()
+      """.trimIndent(),
     )
 
     val findings = createRule().compileAndLintWithContext(env, code)

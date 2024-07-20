@@ -1,5 +1,4 @@
 import org.jetbrains.dokka.gradle.DokkaTask
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
   kotlin("jvm") version "1.9.10"
@@ -27,7 +26,7 @@ tasks.withType<Test> {
     showStandardStreams = true
     events = setOf(
       org.gradle.api.tasks.testing.logging.TestLogEvent.FAILED,
-      org.gradle.api.tasks.testing.logging.TestLogEvent.PASSED
+      org.gradle.api.tasks.testing.logging.TestLogEvent.PASSED,
     )
     exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
   }
@@ -132,7 +131,12 @@ spotless {
     targetExclude("!**/build/**/*.*")
     ktlint(libs.versions.ktlint.get())
       .editorConfigOverride(
-        mapOf("indent_size" to "2", "max_line_length" to "120")
+        mapOf(
+          "indent_size" to "2",
+          "max_line_length" to "120",
+          "ktlint_standard_function-expression-body" to "disabled",
+          "ktlint_standard_class-signature" to "disabled",
+        ),
       )
     trimTrailingWhitespace()
     endWithNewline()
@@ -142,7 +146,7 @@ spotless {
     target("**/*.gradle.kts")
     ktlint(libs.versions.ktlint.get())
       .editorConfigOverride(
-        mapOf("indent_size" to "2", "max_line_length" to "120")
+        mapOf("indent_size" to "2", "max_line_length" to "120"),
       )
     trimTrailingWhitespace()
     endWithNewline()

@@ -63,14 +63,14 @@ import ru.kode.detekt.rule.compose.node.isComposableCall
 class ConditionCouldBeLifted(
   config: Config = Config.empty,
   // this parameter is used in tests to pass another package
-  private val composableAnnotationClassPackage: String = "androidx.compose.runtime"
+  private val composableAnnotationClassPackage: String = "androidx.compose.runtime",
 ) : Rule(config) {
 
   override val issue = Issue(
     javaClass.simpleName,
     Severity.Defect,
     "Reports liftable conditions in compose layouts",
-    Debt.FIVE_MINS
+    Debt.FIVE_MINS,
   )
 
   private val ignoreCallsWithArgumentNames by config(defaultValue = listOf("modifier"))
@@ -131,9 +131,9 @@ class ConditionCouldBeLifted(
     private fun KtCallExpression.tryExtractContentLambda(): KtLambdaExpression? {
       val resolvedCall = this.getResolvedCall(bindingContext) ?: return null
       if (resolvedCall.valueArguments.any { (key, value) ->
-        ignoreCallsWithArgumentNames.contains(key.name.toString()) &&
-          value !is DefaultValueArgument
-      }
+          ignoreCallsWithArgumentNames.contains(key.name.toString()) &&
+            value !is DefaultValueArgument
+        }
       ) {
         return null
       }
@@ -178,8 +178,8 @@ class ConditionCouldBeLifted(
       CodeSmell(
         issue,
         Entity.from(node),
-        "Condition could be lifted out of \"${layoutCall.calleeExpression?.text ?: "unknown"}\""
-      )
+        "Condition could be lifted out of \"${layoutCall.calleeExpression?.text ?: "unknown"}\"",
+      ),
     )
   }
 }

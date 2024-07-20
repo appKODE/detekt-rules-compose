@@ -52,7 +52,7 @@ class ComposableFunctionName(config: Config = Config.empty) : Rule(config) {
     javaClass.simpleName,
     Severity.Defect,
     "Incorrect composable function name",
-    Debt.FIVE_MINS
+    Debt.FIVE_MINS,
   )
 
   override fun visitNamedFunction(function: KtNamedFunction) {

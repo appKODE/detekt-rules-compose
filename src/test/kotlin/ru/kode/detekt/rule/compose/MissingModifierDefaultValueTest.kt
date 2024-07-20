@@ -159,5 +159,5 @@ class MissingModifierDefaultValueTest : ShouldSpec(
 
       findings.shouldBeEmpty()
     }
-  }
+  },
 )

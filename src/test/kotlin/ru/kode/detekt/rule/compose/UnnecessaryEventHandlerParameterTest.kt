@@ -28,7 +28,7 @@ class UnnecessaryEventHandlerParameterTest : ShouldSpec({
         fun Test(data: Data, onClick: (Data) -> Unit) {
           Button(onClick = { onClick(data) }) { }
         }
-      """.trimIndent()
+      """.trimIndent(),
     )
 
     val findings = UnnecessaryEventHandlerParameter().compileAndLintWithContext(env, code)
@@ -45,7 +45,7 @@ class UnnecessaryEventHandlerParameterTest : ShouldSpec({
         fun Test(data: Data, onButtonClick: (Int) -> Unit) {
           Button(onClick = { onButtonClick(data.id) }) { }
         }
-      """.trimIndent()
+      """.trimIndent(),
     )
 
     val findings = UnnecessaryEventHandlerParameter().compileAndLintWithContext(env, code)
@@ -63,7 +63,7 @@ class UnnecessaryEventHandlerParameterTest : ShouldSpec({
         fun Test(data: Data, onButtonClick: (Int) -> Unit) {
           Button(onClick = { onButtonClick(data.nested.id) }) { }
         }
-      """.trimIndent()
+      """.trimIndent(),
     )
 
     val findings = UnnecessaryEventHandlerParameter().compileAndLintWithContext(env, code)
@@ -81,7 +81,7 @@ class UnnecessaryEventHandlerParameterTest : ShouldSpec({
           val localData = Data(3, "hello")
           Button(onClick = { onButtonClick(localData.id) }) { }
         }
-      """.trimIndent()
+      """.trimIndent(),
     )
 
     val findings = UnnecessaryEventHandlerParameter().compileAndLintWithContext(env, code)
@@ -100,7 +100,7 @@ class UnnecessaryEventHandlerParameterTest : ShouldSpec({
           Button(onClick = { onButtonClick(dataUsage.id) }) { }
           Button(onClick = { onButton1Click(dataUsage) }) { }
         }
-      """.trimIndent()
+      """.trimIndent(),
     )
 
     val findings = UnnecessaryEventHandlerParameter().compileAndLintWithContext(env, code)
@@ -119,7 +119,7 @@ class UnnecessaryEventHandlerParameterTest : ShouldSpec({
         fun Test(data: Data, onButtonClick: (Int) -> Unit) {
           Button(onClick = { processData(data.id) }) { }
         }
-      """.trimIndent()
+      """.trimIndent(),
     )
 
     val findings = UnnecessaryEventHandlerParameter().compileAndLintWithContext(env, code)
@@ -139,7 +139,7 @@ class UnnecessaryEventHandlerParameterTest : ShouldSpec({
           fun Test(data: Data, onButtonClick: (Int) -> Unit) {
             Button(onClick = { onButtonClick(data.process()) }) { }
           }
-      """.trimIndent()
+      """.trimIndent(),
     )
 
     val findings = UnnecessaryEventHandlerParameter().compileAndLintWithContext(env, code)
@@ -156,7 +156,7 @@ class UnnecessaryEventHandlerParameterTest : ShouldSpec({
         fun Test(data: Data, onButtonClick: (Int) -> Unit) {
           Button(onClick = { onButtonClick(data.id) }) { }
         }
-      """.trimIndent()
+      """.trimIndent(),
     )
 
     val findings = UnnecessaryEventHandlerParameter().compileAndLintWithContext(env, code)
@@ -173,7 +173,7 @@ class UnnecessaryEventHandlerParameterTest : ShouldSpec({
         fun Test(data: Data, onButtonClick: (Int, String) -> Unit) {
           Button(onClick = { onButtonClick(data.id, "hello") }) { }
         }
-      """.trimIndent()
+      """.trimIndent(),
     )
 
     val findings = UnnecessaryEventHandlerParameter().compileAndLintWithContext(env, code)
@@ -190,7 +190,7 @@ class UnnecessaryEventHandlerParameterTest : ShouldSpec({
         fun Test(data: Data, onButtonClick: (Int, String, Int) -> Unit) {
           Button(onClick = { onButtonClick(0, data.title, 0) }) { }
         }
-      """.trimIndent()
+      """.trimIndent(),
     )
 
     val findings = UnnecessaryEventHandlerParameter().compileAndLintWithContext(env, code)
@@ -210,7 +210,7 @@ class UnnecessaryEventHandlerParameterTest : ShouldSpec({
           ) {
             Button(onClick = { onClick(state.id) }) { Text("Click here") }
           }
-      """.trimIndent()
+      """.trimIndent(),
     )
 
     shouldNotThrowAny {
@@ -237,7 +237,7 @@ class UnnecessaryEventHandlerParameterTest : ShouldSpec({
                   is State.Data -> Button(onClick = { onClick(state.id) }) {}
               }
           }
-      """.trimIndent()
+      """.trimIndent(),
     )
 
     val findings = UnnecessaryEventHandlerParameter().compileAndLintWithContext(env, code)

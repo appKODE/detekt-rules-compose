@@ -45,7 +45,7 @@ class ComposableParametersOrdering(config: Config = Config.empty) : Rule(config)
     javaClass.simpleName,
     Severity.Defect,
     "Checks Composable function parameter ordering",
-    Debt.FIVE_MINS
+    Debt.FIVE_MINS,
   )
 
   override fun visitNamedFunction(function: KtNamedFunction) {
@@ -107,7 +107,7 @@ class ComposableParametersOrdering(config: Config = Config.empty) : Rule(config)
         issue,
         Entity.from(node),
         "Optional parameters should be placed after required parameters"
-      )
+      ),
     )
   }
 

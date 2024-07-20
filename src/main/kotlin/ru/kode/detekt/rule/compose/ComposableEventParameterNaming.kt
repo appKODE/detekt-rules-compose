@@ -39,7 +39,7 @@ class ComposableEventParameterNaming(config: Config = Config.empty) : Rule(confi
     javaClass.simpleName,
     Severity.Defect,
     "Checks Composable event parameters naming",
-    Debt.FIVE_MINS
+    Debt.FIVE_MINS,
   )
 
   override fun visitNamedFunction(function: KtNamedFunction) {
@@ -66,8 +66,8 @@ class ComposableEventParameterNaming(config: Config = Config.empty) : Rule(confi
           "Invalid event parameter name \"$name\". Do not use past tense. For example: \"onClicked\" → \"onClick\""
         } else {
           "Invalid event parameter name \"$name\". Use names like \"onClick\", \"onValueChange\" etc"
-        }
-      )
+        },
+      ),
     )
   }
 }

@@ -122,5 +122,5 @@ class TopLevelComposableFunctionsTest : ShouldSpec(
 
       findings shouldHaveSize 1
     }
-  }
+  },
 )

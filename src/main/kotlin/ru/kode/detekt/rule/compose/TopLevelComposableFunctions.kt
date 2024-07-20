@@ -52,7 +52,7 @@ class TopLevelComposableFunctions(config: Config = Config.empty) : Rule(config) 
     javaClass.simpleName,
     Severity.Defect,
     "Checks that composable function is defined as a top-level function",
-    Debt.FIVE_MINS
+    Debt.FIVE_MINS,
   )
 
   private val allowInObjects by config(defaultValue = false)
@@ -74,8 +74,8 @@ class TopLevelComposableFunctions(config: Config = Config.empty) : Rule(config) 
       CodeSmell(
         issue,
         Entity.from(node),
-        "Composable functions should be defined as top-level functions"
-      )
+        "Composable functions should be defined as top-level functions",
+      ),
     )
   }
 }

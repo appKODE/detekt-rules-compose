@@ -40,7 +40,7 @@ class MissingModifierDefaultValue(config: Config = Config.empty) : Rule(config) 
     javaClass.simpleName,
     Severity.Defect,
     "Checks that Modifier parameter has a default value",
-    Debt.FIVE_MINS
+    Debt.FIVE_MINS,
   )
 
   override fun visitNamedFunction(function: KtNamedFunction) {
@@ -64,8 +64,8 @@ class MissingModifierDefaultValue(config: Config = Config.empty) : Rule(config) 
       CodeSmell(
         issue,
         Entity.from(node),
-        "Modifier parameter should have a default value: \"modifier = Modifier\""
-      )
+        "Modifier parameter should have a default value: \"modifier = Modifier\"",
+      ),
     )
   }
 }

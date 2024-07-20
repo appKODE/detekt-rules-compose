@@ -34,7 +34,7 @@ class ConditionCouldBeLiftedTest : ShouldSpec({
           }
         }
       }
-      """
+      """,
     )
 
     val findings = createRule().compileAndLintWithContext(env, code)
@@ -55,7 +55,7 @@ class ConditionCouldBeLiftedTest : ShouldSpec({
           if (printValue) Text(text = "3")
         }
       }
-      """
+      """,
     )
 
     val findings = createRule().compileAndLintWithContext(env, code)
@@ -80,7 +80,7 @@ class ConditionCouldBeLiftedTest : ShouldSpec({
           }
         )
       }
-      """
+      """,
     )
 
     val findings = createRule().compileAndLintWithContext(env, code)
@@ -98,7 +98,7 @@ class ConditionCouldBeLiftedTest : ShouldSpec({
       fun Test(content: @Composable () -> Unit) {
         Column(content = content)
       }
-      """
+      """,
     )
 
     val findings = createRule().compileAndLintWithContext(env, code)
@@ -125,7 +125,7 @@ class ConditionCouldBeLiftedTest : ShouldSpec({
           }
         }
       }
-      """
+      """,
     )
 
     val findings = createRule().compileAndLintWithContext(env, code)
@@ -152,7 +152,7 @@ class ConditionCouldBeLiftedTest : ShouldSpec({
           }
         }
       }
-      """
+      """,
     )
 
     val findings = createRule().compileAndLintWithContext(env, code)
@@ -179,7 +179,7 @@ class ConditionCouldBeLiftedTest : ShouldSpec({
       fun Test() {
         CloseButton(modifier = Modifier.padding(10.dp), onClick = {})
       }
-      """
+      """,
     )
 
     val findings = createRule().compileAndLintWithContext(env, code)
@@ -203,7 +203,7 @@ class ConditionCouldBeLiftedTest : ShouldSpec({
           }
         }
       }
-      """
+      """,
     )
 
     val findings = createRule().compileAndLintWithContext(env, code)
@@ -227,7 +227,7 @@ class ConditionCouldBeLiftedTest : ShouldSpec({
           }
         }
       }
-      """
+      """,
     )
 
     val findings = createRule().compileAndLintWithContext(env, code)
@@ -253,7 +253,7 @@ class ConditionCouldBeLiftedTest : ShouldSpec({
           val z = 5
         }
       }
-      """
+      """,
       )
 
       val findings = createRule().compileAndLintWithContext(env, code)
@@ -284,7 +284,7 @@ class ConditionCouldBeLiftedTest : ShouldSpec({
           baz()
         }
       }
-      """
+      """,
       )
 
       val findings = createRule().compileAndLintWithContext(env, code)
@@ -310,7 +310,7 @@ class ConditionCouldBeLiftedTest : ShouldSpec({
           }
         }
       }
-      """
+      """,
       )
 
       val findings = createRule().compileAndLintWithContext(env, code)
@@ -336,7 +336,7 @@ class ConditionCouldBeLiftedTest : ShouldSpec({
           }
         }
       }
-      """
+      """,
     )
 
     val findings = createRule().compileAndLintWithContext(env, code)
@@ -359,7 +359,7 @@ class ConditionCouldBeLiftedTest : ShouldSpec({
           }
         }
       }
-      """
+      """,
     )
 
     val findings = createRule().compileAndLintWithContext(env, code)
@@ -381,7 +381,7 @@ class ConditionCouldBeLiftedTest : ShouldSpec({
           }
         }
       }
-      """
+      """,
     )
 
     val findings = createRule().compileAndLintWithContext(env, code)
@@ -403,7 +403,7 @@ class ConditionCouldBeLiftedTest : ShouldSpec({
           }
         }
       }
-      """
+      """,
     )
 
     val findings = createRule().compileAndLintWithContext(env, code)
@@ -425,11 +425,11 @@ class ConditionCouldBeLiftedTest : ShouldSpec({
           }
         }
       }
-      """
+      """,
     )
 
     val findings = createRule(
-      TestConfig("ignoreCallsWithArgumentNames" to listOf("verticalAlignment"))
+      TestConfig("ignoreCallsWithArgumentNames" to listOf("verticalAlignment")),
     ).compileAndLintWithContext(env, code)
 
     findings.shouldBeEmpty()
@@ -439,5 +439,5 @@ class ConditionCouldBeLiftedTest : ShouldSpec({
 private fun Exhaustive.Companion.composeLayoutName() = listOf("Box", "Row", "Column").exhaustive()
 private fun createRule(config: Config = Config.empty) = ConditionCouldBeLifted(
   composableAnnotationClassPackage = "ru.kode.detekt.rule",
-  config = config
+  config = config,
 )

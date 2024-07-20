@@ -22,7 +22,7 @@ class PublicComposablePreview(config: Config = Config.empty) : Rule(config) {
     javaClass.simpleName,
     Severity.Defect,
     "Reports public composable previews",
-    Debt.FIVE_MINS
+    Debt.FIVE_MINS,
   )
 
   override fun visitNamedFunction(function: KtNamedFunction) {
@@ -37,8 +37,8 @@ class PublicComposablePreview(config: Config = Config.empty) : Rule(config) {
       CodeSmell(
         issue,
         Entity.from(node),
-        "Preview composable must not be public"
-      )
+        "Preview composable must not be public",
+      ),
     )
   }
 }

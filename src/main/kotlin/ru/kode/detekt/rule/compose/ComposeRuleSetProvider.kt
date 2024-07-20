@@ -22,8 +22,8 @@ class ComposeRuleSetProvider : RuleSetProvider {
         MissingModifierDefaultValue(config),
         TopLevelComposableFunctions(config),
         ComposableFunctionName(config),
-        ConditionCouldBeLifted(config)
-      )
+        ConditionCouldBeLifted(config),
+      ),
     )
   }
 }

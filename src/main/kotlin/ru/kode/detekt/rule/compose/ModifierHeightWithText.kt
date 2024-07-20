@@ -49,7 +49,7 @@ class ModifierHeightWithText(config: Config = Config.empty) : Rule(config) {
     javaClass.simpleName,
     Severity.Defect,
     "Reports usage of height modifier in composable functions with text",
-    Debt.FIVE_MINS
+    Debt.FIVE_MINS,
   )
 
   override fun visitNamedFunction(function: KtNamedFunction) {
@@ -80,11 +80,9 @@ class ModifierHeightWithText(config: Config = Config.empty) : Rule(config) {
       super.visitCallExpression(expression)
     }
 
-    private fun KtExpression.isModifierChainExpression(): Boolean {
-      return (this as? KtDotQualifiedExpression)?.text?.let {
-        it.startsWith("Modifier") || it.startsWith("modifier")
-      } == true
-    }
+    private fun KtExpression.isModifierChainExpression(): Boolean = (this as? KtDotQualifiedExpression)?.text?.let {
+      it.startsWith("Modifier") || it.startsWith("modifier")
+    } == true
 
     private fun reportError(node: KtValueArgument) {
       val heightCall = node.findDescendantOfType<KtCallExpression> { it.calleeExpression?.text == "height" }
@@ -93,8 +91,8 @@ class ModifierHeightWithText(config: Config = Config.empty) : Rule(config) {
         CodeSmell(
           issue,
           Entity.from(heightCall),
-          "Composable uses \"height\" modifier and contains a Text child. Use heightIn(min = N.dp) instead"
-        )
+          "Composable uses \"height\" modifier and contains a Text child. Use heightIn(min = N.dp) instead",
+        ),
       )
     }
   }

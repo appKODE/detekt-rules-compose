@@ -31,7 +31,7 @@ fun KtParameter.isModifier(): Boolean {
 
 fun KtCallExpression.isComposableCall(
   composableAnnotationClassPackage: String,
-  bindingContext: BindingContext
+  bindingContext: BindingContext,
 ): Boolean {
   val resolvedCall = this.getResolvedCall(bindingContext) ?: return false
   val annotationFqName = FqName("$composableAnnotationClassPackage.Composable")
@@ -41,7 +41,7 @@ fun KtCallExpression.isComposableCall(
 
 fun KtExpression.hasComposableCallChildren(
   composableAnnotationClassPackage: String,
-  bindingContext: BindingContext
+  bindingContext: BindingContext,
 ): Boolean {
   return this.collectDescendantsOfType<KtCallExpression>().any {
     it.isComposableCall(composableAnnotationClassPackage, bindingContext)
