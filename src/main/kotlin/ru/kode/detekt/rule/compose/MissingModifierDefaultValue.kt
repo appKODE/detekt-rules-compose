@@ -52,7 +52,7 @@ class MissingModifierDefaultValue(config: Config = Config.empty) : Rule(config) 
 
     if (function.hasAnnotation("Composable")) {
       val modifierParameter = function.valueParameters.find { it.isModifier() }
-      // abstract functions and interface functions function cannot have default parameters
+      // abstract functions and interface functions cannot have default parameters
       // (Compose compiler plugin restriction).
       // Open methods do not have those restrictions, but it feels logical to exclude them too
       // in a similar manner
