@@ -45,14 +45,18 @@ class MissingModifierDefaultValue(config: Config = Config.empty) : Rule(config) 
   )
 
   override fun visitNamedFunction(function: KtNamedFunction) {
+    if (function.isActual()) {
+      // actual functions function cannot have default parameters
+      return
+    }
+
     if (function.hasAnnotation("Composable")) {
       val modifierParameter = function.valueParameters.find { it.isModifier() }
-      // abstract functions, interface functions and actual function cannot have default parameters
+      // abstract functions and interface functions function cannot have default parameters
       // (Compose compiler plugin restriction).
       // Open methods do not have those restrictions, but it feels logical to exclude them too
       // in a similar manner
-      if (function.isAbstract() || function.isOpen() ||
-        function.containingClass()?.isInterface() == true || function.isActual()) {
+      if (function.isAbstract() || function.isOpen() || function.containingClass()?.isInterface() == true) {
         return
       }
       if (!function.isOverride() && modifierParameter?.hasDefaultValue() == false) {

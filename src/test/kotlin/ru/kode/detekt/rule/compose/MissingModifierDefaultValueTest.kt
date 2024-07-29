@@ -159,5 +159,18 @@ class MissingModifierDefaultValueTest : ShouldSpec(
 
       findings.shouldBeEmpty()
     }
+
+    should("not report an actual") {
+      // language=kotlin
+      val code = """
+        actual fun NativeView(
+          modifier: Modifier
+        ) {}
+      """.trimIndent()
+
+      val findings = MissingModifierDefaultValue().lint(code)
+
+      findings.shouldBeEmpty()
+    }
   },
 )
