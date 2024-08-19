@@ -2,6 +2,7 @@ import org.jetbrains.dokka.gradle.DokkaTask
 
 plugins {
   kotlin("jvm") version "1.9.24"
+  alias(libs.plugins.shadowjar)
   `maven-publish`
   signing
   alias(libs.plugins.spotless)
@@ -40,6 +41,14 @@ allprojects {
 
   kotlin {
     jvmToolchain(11)
+  }
+
+  // see https://github.com/johnrengelman/shadow/issues/651
+  if (!hasProperty("uberJar")) {
+    val javaComponent = components.findByName("java") as AdhocComponentWithVariants
+    javaComponent.withVariantsFromConfiguration(configurations["shadowRuntimeElements"]) {
+      skip()
+    }
   }
 
   val dokkaHtml by tasks.existing(DokkaTask::class)
