@@ -42,7 +42,7 @@ Some rules will only work if detekt is running in a [type resolution](https://de
 Add detekt rules plugin in your `build.gradle` (or use any other [supported method](https://detekt.dev/docs/introduction/extensions#let-detekt-know-about-your-extensions)):
 ```
 dependencies {
-  detektPlugins("ru.kode:detekt-rules-compose:1.3.0")
+  detektPlugins("ru.kode:detekt-rules-compose:1.4.0")
 }
 ```
 and then add this configuration section to your `detekt-config.yml` to activate the rules:
@@ -57,8 +57,6 @@ compose:
   ComposableParametersOrdering:
     active: true
   ModifierHeightWithText:
-    active: true
-  ModifierParameterPosition:
     active: true
   MissingModifierDefaultValue:
     active: true
