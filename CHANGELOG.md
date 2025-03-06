@@ -1,6 +1,6 @@
 # Changelog
 
-## 1.4.0 - ?
+## 1.4.0 - 2024-08-22
 
 * Merge `ModifierParameterPosition` rule into the `ComposableParametersOrdering` rule. After upgrading to the new version of this ruleset, `ModifierParameterPosition` should be removed from `detekt-config.yml` file
 * Add support for building fat jars
