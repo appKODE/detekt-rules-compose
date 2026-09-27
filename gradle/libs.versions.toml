@@ -1,23 +1,33 @@
 [versions]
-detekt = "1.23.3"
-koTest = "5.8.0"
-ktlint = "1.3.1"
-spotless = "6.23.3"
-dokka = "1.9.10"
-shadowjar = "7.1.2"
+kotlin = "2.4.20"
+detekt1 = "1.23.8"
+# the detekt 1 rules compile against this API: compiler PSI inlined from newer detekt (1.23.6+) breaks older 1.x at runtime
+detekt1Min = "1.23.0"
+detekt2 = "2.0.0-alpha.6"
+koTest = "6.2.5"
+ktlint = "1.8.0"
+spotless = "8.10.3"
+dokka = "2.2.0"
+vanniktech = "0.37.0"
+kover = "0.9.9"
 
 [libraries]
-detekt-api = { module = "io.gitlab.arturbosch.detekt:detekt-api", version.ref = "detekt" }
-detekt-test = { module = "io.gitlab.arturbosch.detekt:detekt-test", version.ref = "detekt" }
+detekt1-api-min = { module = "io.gitlab.arturbosch.detekt:detekt-api", version.ref = "detekt1Min" }
+detekt1-test = { module = "io.gitlab.arturbosch.detekt:detekt-test", version.ref = "detekt1" }
+detekt2-api = { module = "dev.detekt:detekt-api", version.ref = "detekt2" }
+detekt2-test = { module = "dev.detekt:detekt-test", version.ref = "detekt2" }
+detekt2-test-utils = { module = "dev.detekt:detekt-test-utils", version.ref = "detekt2" }
+detekt2-psi = { module = "dev.detekt:detekt-psi-utils", version.ref = "detekt2" }
 kotest-junit-runner = { module = "io.kotest:kotest-runner-junit5", version.ref = "koTest" }
 kotest-assertions-core = { module = "io.kotest:kotest-assertions-core", version.ref = "koTest" }
 kotest-property = { module = "io.kotest:kotest-property", version.ref = "koTest" }
-ktlint = { module = "com.pinterest:ktlint", version.ref = "ktlint" }
 
 [bundles]
 koTest = [ "kotest-junit-runner", "kotest-assertions-core", "kotest-property" ]
 
 [plugins]
+kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 spotless = { id = "com.diffplug.spotless", version.ref = "spotless" }
 dokka = { id = "org.jetbrains.dokka", version.ref = "dokka" }
-shadowjar = { id = "com.github.johnrengelman.shadow", version.ref = "shadowjar" }
+vanniktech-publish = { id = "com.vanniktech.maven.publish", version.ref = "vanniktech" }
+kover = { id = "org.jetbrains.kotlinx.kover", version.ref = "kover" }

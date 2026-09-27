@@ -1,135 +1,65 @@
-import org.jetbrains.dokka.gradle.DokkaTask
+import com.vanniktech.maven.publish.MavenPublishBaseExtension
+import kotlinx.kover.gradle.plugin.dsl.KoverProjectExtension
+import org.jetbrains.kotlin.gradle.dsl.KotlinJvmProjectExtension
 
 plugins {
-  kotlin("jvm") version "1.9.24"
-  alias(libs.plugins.shadowjar)
-  `maven-publish`
-  signing
+  alias(libs.plugins.kotlin.jvm) apply false
   alias(libs.plugins.spotless)
   alias(libs.plugins.dokka) apply false
-}
-
-repositories {
-  mavenCentral()
-}
-
-dependencies {
-  compileOnly(libs.detekt.api)
-  testImplementation(libs.detekt.test)
-  testImplementation(libs.bundles.koTest)
-}
-
-tasks.withType<Test> {
-  useJUnitPlatform()
-  systemProperty("compile-snippet-tests", true)
-  testLogging {
-    showExceptions = true
-    showStandardStreams = true
-    events = setOf(
-      org.gradle.api.tasks.testing.logging.TestLogEvent.FAILED,
-      org.gradle.api.tasks.testing.logging.TestLogEvent.PASSED,
-    )
-    exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
-  }
+  alias(libs.plugins.vanniktech.publish) apply false
+  alias(libs.plugins.kover) apply false
 }
 
 allprojects {
-  apply(plugin = "kotlin")
-  apply(plugin = "maven-publish")
-  apply(plugin = "org.jetbrains.dokka")
-  apply(plugin = "signing")
+  repositories {
+    mavenCentral()
+  }
+}
 
-  kotlin {
+subprojects {
+  apply(plugin = "org.jetbrains.kotlin.jvm")
+
+  extensions.configure<KotlinJvmProjectExtension>("kotlin") {
     jvmToolchain(11)
   }
 
-  // see https://github.com/johnrengelman/shadow/issues/651
-  if (!hasProperty("uberJar")) {
-    val javaComponent = components.findByName("java") as AdhocComponentWithVariants
-    javaComponent.withVariantsFromConfiguration(configurations["shadowRuntimeElements"]) {
-      skip()
+  tasks.withType<Test> {
+    useJUnitPlatform()
+    testLogging {
+      showExceptions = true
+      events = setOf(org.gradle.api.tasks.testing.logging.TestLogEvent.FAILED)
+      exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
     }
   }
 
-  val dokkaHtml by tasks.existing(DokkaTask::class)
+  // detekt1/detekt2: rule jars built from shared/ sources against each engine's own compiler
+  if (project.name != "shared-tests") {
+    apply(plugin = "org.jetbrains.dokka")
+    apply(plugin = "com.vanniktech.maven.publish")
+    apply(plugin = "org.jetbrains.kotlinx.kover")
 
-  val dokkaJar by tasks.creating(org.gradle.jvm.tasks.Jar::class) {
-    group = JavaBasePlugin.DOCUMENTATION_GROUP
-    archiveClassifier.set("javadoc")
-    from(dokkaHtml)
-  }
+    extensions.configure<KotlinJvmProjectExtension>("kotlin") {
+      sourceSets.named("main") { kotlin.srcDir(rootProject.file("shared/src/main/kotlin")) }
+      sourceSets.named("test") { kotlin.srcDir(rootProject.file("shared-tests/src/suite/kotlin")) }
+    }
 
-  val sourcesJar by tasks.creating(org.gradle.jvm.tasks.Jar::class) {
-    archiveClassifier.set("sources")
-    from(sourceSets.main.get().allSource)
-  }
-
-  val pomArtifactId: String? by project
-  if (pomArtifactId != null) {
-    publishing {
-      publications {
-        create<MavenPublication>("maven") {
-          val versionName: String by project
-          val pomGroupId: String by project
-          groupId = pomGroupId
-          artifactId = pomArtifactId
-          version = versionName
-          from(components["java"])
-
-          artifact(dokkaJar)
-          artifact(sourcesJar)
-
-          pom {
-            val pomDescription: String by project
-            val pomUrl: String by project
-            val pomName: String by project
-            description.set(pomDescription)
-            url.set(pomUrl)
-            name.set(pomName)
-            scm {
-              val pomScmUrl: String by project
-              val pomScmConnection: String by project
-              val pomScmDevConnection: String by project
-              url.set(pomScmUrl)
-              connection.set(pomScmConnection)
-              developerConnection.set(pomScmDevConnection)
-            }
-            licenses {
-              license {
-                val pomLicenseName: String by project
-                val pomLicenseUrl: String by project
-                val pomLicenseDist: String by project
-                name.set(pomLicenseName)
-                url.set(pomLicenseUrl)
-                distribution.set(pomLicenseDist)
-              }
-            }
-            developers {
-              developer {
-                val pomDeveloperId: String by project
-                val pomDeveloperName: String by project
-                id.set(pomDeveloperId)
-                name.set(pomDeveloperName)
-              }
-            }
+    extensions.configure<KoverProjectExtension> {
+      reports {
+        filters {
+          includes {
+            // shared rule logic and the engine's ComposeSemantic implementation
+            classes("ru.kode.detekt.rule.compose.shared.*", "*ComposeSemantic")
           }
         }
-      }
-      signing {
-        sign(publishing.publications["maven"])
-      }
-      repositories {
-        maven {
-          val releasesRepoUrl = uri("https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/")
-          val snapshotsRepoUrl = uri("https://s01.oss.sonatype.org/content/repositories/snapshots/")
-          val versionName: String by project
-          url = if (versionName.endsWith("SNAPSHOT")) snapshotsRepoUrl else releasesRepoUrl
-          credentials {
-            username = project.findProperty("NEXUS_USERTOKEN_NAME")?.toString()
-            password = project.findProperty("NEXUS_USERTOKEN_PASSWORD")?.toString()
-          }
+        verify {
+          rule { minBound(90) }
         }
       }
+    }
+
+    extensions.configure<MavenPublishBaseExtension> {
+      publishToMavenCentral()
+      signAllPublications()
     }
   }
 }
@@ -137,7 +67,8 @@ allprojects {
 spotless {
   kotlin {
     target("**/*.kt")
-    targetExclude("!**/build/**/*.*")
+    // smoke/ fixtures are expected-output data: reformatting would shift the reported positions
+    targetExclude("**/build/**/*.*", "smoke/**")
     ktlint(libs.versions.ktlint.get())
       .editorConfigOverride(
         mapOf(

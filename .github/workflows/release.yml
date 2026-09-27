@@ -1,0 +1,87 @@
+name: Release Library
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: read
+
+jobs:
+  publish-library:
+    runs-on: ubuntu-latest
+    environment: release
+    if: ${{ !contains(github.event.head_commit.message, 'ci skip') }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Setup Java
+        uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          # 11 is the toolchain the rules are compiled with, Gradle itself runs on 17
+          java-version: |
+            11
+            17
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v6
+
+      # The version is taken from VERSION_NAME in gradle.properties, the tag must match it
+      - name: Check tag matches VERSION_NAME
+        run: |
+          version="$(grep '^VERSION_NAME=' gradle.properties | cut -d= -f2)"
+          if [ "v${version}" != "${GITHUB_REF_NAME}" ]; then
+            echo "Tag ${GITHUB_REF_NAME} does not match VERSION_NAME=${version}"
+            exit 1
+          fi
+
+      - name: Check (tests on both engines, coverage gate, detekt CLI smoke test)
+        run: ./gradlew check && ./scripts/cli-smoke-test.sh
+
+      - name: Prepare publishing credentials
+        env:
+          NEXUS_USERTOKEN_NAME: ${{ secrets.NEXUS_USERTOKEN_NAME }}
+          NEXUS_USERTOKEN_PASSWORD: ${{ secrets.NEXUS_USERTOKEN_PASSWORD }}
+          SIGNING_KEY_ID: ${{ secrets.SIGNING_KEY_ID }}
+          SIGNING_PASSWORD: ${{ secrets.SIGNING_PASSWORD }}
+          SIGNING_SECRET_KEY_RING_FILE_BASE64: ${{ secrets.SIGNING_SECRET_KEY_RING_FILE_BASE64 }}
+        run: |
+          required_vars=(
+            NEXUS_USERTOKEN_NAME
+            NEXUS_USERTOKEN_PASSWORD
+            SIGNING_KEY_ID
+            SIGNING_PASSWORD
+            SIGNING_SECRET_KEY_RING_FILE_BASE64
+          )
+
+          for var in "${required_vars[@]}"; do
+            if [ -z "${!var}" ]; then
+              echo "Missing required secret: ${var}"
+              exit 1
+            fi
+          done
+
+          keyring_file="${RUNNER_TEMP}/signing-secring.gpg"
+          echo "${SIGNING_SECRET_KEY_RING_FILE_BASE64}" | base64 --decode > "${keyring_file}"
+          chmod 600 "${keyring_file}"
+
+          mkdir -p "${HOME}/.gradle"
+          {
+            echo "mavenCentralUsername=${NEXUS_USERTOKEN_NAME}"
+            echo "mavenCentralPassword=${NEXUS_USERTOKEN_PASSWORD}"
+            echo "signing.keyId=${SIGNING_KEY_ID}"
+            echo "signing.password=${SIGNING_PASSWORD}"
+            echo "signing.secretKeyRingFile=${keyring_file}"
+          } >> "${HOME}/.gradle/gradle.properties"
+
+      # Publishes ru.kode:detekt-rules-compose and ru.kode:detekt-rules-compose-detekt2 to Maven Central
+      # (Central Portal) via the vanniktech maven-publish plugin.
+      - name: Publish library to Maven Central
+        run: >-
+          ./gradlew --no-daemon --stacktrace --no-configuration-cache
+          publishAndReleaseToMavenCentral
