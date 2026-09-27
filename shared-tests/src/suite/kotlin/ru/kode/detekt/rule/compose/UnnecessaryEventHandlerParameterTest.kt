@@ -8,6 +8,7 @@ import dev.detekt.test.utils.createEnvironment
 import io.kotest.core.spec.style.ShouldSpec
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
+import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
 import ru.kode.detekt.rule.compose.snippet.composeSnippet
 
@@ -288,6 +289,72 @@ class UnnecessaryEventHandlerParameterTest : ShouldSpec({
         data class Data(val id: Int)
         fun Test(data: Data, onClick: (Int) -> Unit) {
           Button(onClick = { onClick(data.id) }) {}
+        }
+      """.trimIndent(),
+    )
+
+    val findings = UnnecessaryEventHandlerParameter().lintWithContext(environment, code)
+
+    findings.shouldBeEmpty()
+  }
+
+  // https://github.com/appKODE/detekt-rules-compose/issues/41
+  should("not report a lambda parameter shadowing a state parameter") {
+    // language=kotlin
+    val code = composeSnippet(
+      """
+        @Composable
+        fun Asdf(rotation: Float, onClick: (Float) -> Unit) {
+          Column {
+            Asdf(rotation, { rotation -> onClick(rotation) })
+          }
+        }
+      """.trimIndent(),
+    )
+
+    val findings = UnnecessaryEventHandlerParameter().lintWithContext(environment, code)
+
+    findings.shouldBeEmpty()
+  }
+
+  should("report a state parameter passed from a lambda with another parameter name") {
+    // language=kotlin
+    val code = composeSnippet(
+      """
+        @Composable
+        fun Asdf(rotation: Float, onClick: (Float) -> Unit) {
+          Column {
+            Asdf(rotation, { foo -> onClick(rotation) })
+          }
+        }
+      """.trimIndent(),
+    )
+
+    val findings = UnnecessaryEventHandlerParameter().lintWithContext(environment, code)
+
+    findings shouldHaveSize 1
+    findings.single().message shouldBe "Unnecessary event callback arguments. Move all \"rotation\" access " +
+      "to the parent composable event handler and switch \"onClick\" type to \"() -> Unit\""
+    findings.single().shouldStartAt(code, "onClick: (Float) -> Unit")
+  }
+
+  should("not report a local val or a catch parameter shadowing a state parameter") {
+    // language=kotlin
+    val code = composeSnippet(
+      """
+        @Composable
+        fun Test(id: Int, error: String, values: List<Int>, onClick: (Int) -> Unit, onError: (String?) -> Unit) {
+          Button(onClick = {
+            try {
+              values.first()
+            } catch (error: Exception) {
+              onError(error.message)
+            }
+          }) { }
+          Button(onClick = {
+            val id = values.first()
+            onClick(id)
+          }) { }
         }
       """.trimIndent(),
     )

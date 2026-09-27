@@ -77,7 +77,10 @@ class UnnecessaryEventHandlerParameterAnalyzer(
               else -> null
             }
 
-            if (argumentReceiverName != null && argumentReceiverName in stateParameterNames) {
+            if (argumentReceiverName != null &&
+              argumentReceiverName in stateParameterNames &&
+              !argument.isDeclaredBetween(argumentReceiverName, function)
+            ) {
               diagnostics += buildDiagnostic(eventParameterForCall, argumentReceiverName, index)
             }
           }

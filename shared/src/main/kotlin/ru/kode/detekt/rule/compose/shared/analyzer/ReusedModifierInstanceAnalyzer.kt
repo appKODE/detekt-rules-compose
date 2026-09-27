@@ -56,7 +56,9 @@ class ReusedModifierInstanceAnalyzer(
           .find { it.getArgumentExpression()?.isModifierChainExpression() == true }
           ?.getArgumentExpression()
 
-        if (modifierArgumentExpression?.text?.startsWith("modifier") == true) {
+        if (modifierArgumentExpression?.text?.startsWith("modifier") == true &&
+          !modifierArgumentExpression.isDeclaredBetween("modifier", function)
+        ) {
           diagnostics += ComposeDiagnostic(
             "Composable uses \"modifier\" on the wrong level, non-direct children should use \"Modifier\"",
             expression,
