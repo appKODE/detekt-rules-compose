@@ -1,0 +1,24 @@
+compose:
+  active: true
+  ModifierHeightWithText:
+    active: true
+  ReusedModifierInstance:
+    active: true
+  PublicComposablePreview:
+    active: true
+  ComposableEventParameterNaming:
+    active: true
+  UnnecessaryEventHandlerParameter:
+    active: true
+  ComposableParametersOrdering:
+    active: true
+  ModifierDefaultValue:
+    active: true
+  MissingModifierDefaultValue:
+    active: true
+  TopLevelComposableFunctions:
+    active: true
+  ComposableFunctionName:
+    active: true
+  ConditionCouldBeLifted:
+    active: true

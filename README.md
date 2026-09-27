@@ -1,6 +1,6 @@
 # Detekt rules for Jetpack Compose
 
-[![MavenCentral](https://img.shields.io/maven-central/v/ru.kode/detekt-rules-compose?versionPrefix=1.4.0)](https://search.maven.org/artifact/ru.kode/detekt-rules-compose)
+[![MavenCentral](https://img.shields.io/maven-central/v/ru.kode/detekt-rules-compose?versionPrefix=2.0.0)](https://search.maven.org/artifact/ru.kode/detekt-rules-compose)
 
 A set of [Detekt](https://detekt.dev) rules to help prevent common errors in projects using Jetpack Compose.
 
@@ -24,7 +24,7 @@ Here are some highlights of rules in this rule set:
 
 - `PublicComposablePreview` finds and reports composable previews which are not marked as `private`
 
-- `TopLevelComposableFunctions` ensures that all composable functions are top-level functions (disabled by default)
+- `TopLevelComposableFunctions` ensures that all composable functions are top-level functions (disabled by default; `allowInObjects: true` also allows them inside `object`s)
 
 - `ComposableFunctionName` ensures that Composable functions which return Unit should start with upper-case while the ones that return a value should start with lower case
 
@@ -39,13 +39,21 @@ Some rules will only work if detekt is running in a [type resolution](https://de
 
 # Installation and configuration
 
-Add detekt rules plugin in your `build.gradle` (or use any other [supported method](https://detekt.dev/docs/introduction/extensions#let-detekt-know-about-your-extensions)):
+Add detekt rules plugin in your `build.gradle` (or use any other [supported method](https://detekt.dev/docs/introduction/extensions#let-detekt-know-about-your-extensions)).
+Pick the artifact that matches your detekt version:
 ```
 dependencies {
-  detektPlugins("ru.kode:detekt-rules-compose:1.4.0")
+  // detekt 1.22.0 - 1.23.8
+  detektPlugins("ru.kode:detekt-rules-compose:2.0.0")
+
+  // detekt 2.0.0-alpha.6
+  detektPlugins("ru.kode:detekt-rules-compose-detekt2:2.0.0")
 }
 ```
-and then add this configuration section to your `detekt-config.yml` to activate the rules:
+Both artifacts contain the same rules with the same ids and configuration keys, so `detekt-config.yml` does not change
+when you switch engines. On detekt 2 the type-resolution rules only run with `--analysis-mode full`.
+
+Then add this configuration section to your `detekt-config.yml` to activate the rules:
 ```
 compose:
   ReusedModifierInstance:
