@@ -15,3 +15,19 @@ dependencies {
   testImplementation(libs.bundles.koTest)
   testImplementation(project(":shared-tests"))
 }
+
+// stdlib for the type-resolved test environment, see dev.detekt.test.utils.KotlinEnvironmentContainer
+val detekt1Stdlib: Configuration by configurations.creating { isTransitive = false }
+
+dependencies {
+  detekt1Stdlib(libs.detekt1.kotlin.stdlib)
+}
+
+// resolved when the test JVM starts, not at configuration time
+class Detekt1StdlibArgument(@get:Classpath val stdlib: FileCollection) : CommandLineArgumentProvider {
+  override fun asArguments() = listOf("-Ddetekt1.stdlib=${stdlib.singleFile.absolutePath}")
+}
+
+tasks.test {
+  jvmArgumentProviders += Detekt1StdlibArgument(detekt1Stdlib)
+}
