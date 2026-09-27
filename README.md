@@ -28,6 +28,8 @@ Here are some highlights of rules in this rule set:
 
 - `ComposableFunctionName` ensures that Composable functions which return Unit should start with upper-case while the ones that return a value should start with lower case
 
+- `UnnecessaryLayoutWrapper` finds a `Box`, `Column` or `Row` without parameters which only wraps a single `Box`, `Column` or `Row`, so the child can usually be used directly (disabled by default)
+
 - and others...
 
 Rules can be individually turned `on` or `off` in the configuration file.  
@@ -79,6 +81,8 @@ compose:
   ConditionCouldBeLifted:
     active: true
     ignoreCallsWithArgumentNames: [ 'modifier', 'contentAlignment' ]
+  UnnecessaryLayoutWrapper:
+    active: true
 ```
 
 ## Detekt configuration for Compose

@@ -109,6 +109,10 @@ private val expectedFindings = mapOf(
     "onClick: (Int) -> Unit" to
       "Unnecessary event callback arguments. Move all \"data\" access to the parent composable event handler and switch \"onClick\" type to \"() -> Unit\""
     ),
+  "UnnecessaryLayoutWrapper" to (
+    "Box {" to
+      "\"Box\" has no parameters and wraps a single \"Row\", it is likely unnecessary"
+    ),
 )
 
 private fun createRule(contract: RuleContractCase): Rule {
@@ -145,6 +149,8 @@ private fun createRule(contract: RuleContractCase): Rule {
     "TopLevelComposableFunctions" -> TopLevelComposableFunctions(config)
 
     "UnnecessaryEventHandlerParameter" -> UnnecessaryEventHandlerParameter(config)
+
+    "UnnecessaryLayoutWrapper" -> UnnecessaryLayoutWrapper(config)
 
     else -> error("Unknown rule id: ${contract.ruleId}")
   }

@@ -10,6 +10,8 @@ DETEKT1_CLI=1.23.8
 DETEKT1_OLDEST_CLI=1.22.0
 DETEKT2_CLI=$(sed -n 's/^detekt2 *= *"\(.*\)"/\1/p' gradle/libs.versions.toml)
 GOLDEN_JAR_VERSION=1.4.0
+# rules added after $GOLDEN_JAR_VERSION, as an ERE alternation (A|B)
+NEW_SINCE_GOLDEN="UnnecessaryLayoutWrapper"
 MAVEN=https://repo1.maven.org/maven2
 OUT=build/smoke
 mkdir -p "$OUT"
@@ -35,9 +37,9 @@ run() { # <name> <cli jar> <plugin jar> [extra cli args...]
     || { cat "$OUT/$name.log"; exit 1; }
 }
 
-check() { # <name> <checkstyle xml>
+check() { # <name> <checkstyle xml> [expected findings]
   normalize "$2" > "$OUT/$1.findings"
-  if diff -u smoke/expected-findings.txt "$OUT/$1.findings"; then echo "OK   $1"; else echo "FAIL $1"; failed=1; fi
+  if diff -u "${3:-smoke/expected-findings.txt}" "$OUT/$1.findings"; then echo "OK   $1"; else echo "FAIL $1"; failed=1; fi
 }
 
 ./gradlew -q :detekt1:jar :detekt2:jar
@@ -59,7 +61,9 @@ check "detekt2 (detekt-cli $DETEKT2_CLI)" "$OUT/detekt2.xml"
 if [ "${1:-}" != "--no-golden" ]; then
   golden=$(fetch "ru/kode/detekt-rules-compose/$GOLDEN_JAR_VERSION/detekt-rules-compose-$GOLDEN_JAR_VERSION.jar")
   run golden "$cli1" "$golden" "xml:$OUT/golden.xml"
-  check "golden $GOLDEN_JAR_VERSION (detekt-cli $DETEKT1_CLI)" "$OUT/golden.xml"
+  # rules added after $GOLDEN_JAR_VERSION are not in the golden jar
+  grep -vE " ($NEW_SINCE_GOLDEN) " smoke/expected-findings.txt > "$OUT/golden-expected.txt"
+  check "golden $GOLDEN_JAR_VERSION (detekt-cli $DETEKT1_CLI)" "$OUT/golden.xml" "$OUT/golden-expected.txt"
 fi
 
 exit $failed

@@ -22,6 +22,7 @@ class ComposeRuleSetProvider : RuleSetProvider {
         { config -> TopLevelComposableFunctions(config) },
         { config -> ComposableFunctionName(config) },
         { config -> ConditionCouldBeLifted(config) },
+        { config -> UnnecessaryLayoutWrapper(config) },
       ),
     )
   }

@@ -27,6 +27,7 @@ object SharedRuleContracts {
     "TopLevelComposableFunctions",
     "ComposableFunctionName",
     "ConditionCouldBeLifted",
+    "UnnecessaryLayoutWrapper",
   )
 
   val allCases: List<RuleContractCase> = listOf(
@@ -166,6 +167,20 @@ object SharedRuleContracts {
       """.trimIndent(),
       expectedCount = 1,
       expectedMessageContains = listOf("Unnecessary event callback arguments"),
+    ),
+    RuleContractCase(
+      ruleId = "UnnecessaryLayoutWrapper",
+      code =
+      """
+        @Composable
+        fun Wrapped() {
+          Box {
+            Row(modifier = Modifier.fillMaxSize()) {}
+          }
+        }
+      """.trimIndent(),
+      expectedCount = 1,
+      expectedMessageContains = listOf("wraps a single \"Row\""),
     ),
   )
 

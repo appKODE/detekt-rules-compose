@@ -25,3 +25,5 @@ compose:
   ConditionCouldBeLifted:
     active: false
     ignoreCallsWithArgumentNames: [ 'modifier' ]
+  UnnecessaryLayoutWrapper:
+    active: false

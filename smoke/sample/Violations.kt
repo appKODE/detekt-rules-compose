@@ -75,3 +75,12 @@ fun Liftable(visible: Boolean) {
     }
   }
 }
+
+@Composable
+fun Wrapped() {
+  Column {
+    Row {
+      Text("a")
+    }
+  }
+}

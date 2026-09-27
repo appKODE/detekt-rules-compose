@@ -12,3 +12,4 @@ Violations.kt:54:20 MissingModifierDefaultValue Modifier parameter should have a
 Violations.kt:59:3 TopLevelComposableFunctions Composable functions should be defined as top-level functions
 Violations.kt:66:5 ComposableFunctionName Composable function &apos;lowercaseComposable&apos; should start with upper case
 Violations.kt:73:5 ConditionCouldBeLifted Condition could be lifted out of &quot;Column&quot;
+Violations.kt:81:3 UnnecessaryLayoutWrapper &quot;Column&quot; has no parameters and wraps a single &quot;Row&quot;, it is likely unnecessary
