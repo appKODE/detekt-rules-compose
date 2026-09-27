@@ -10,8 +10,14 @@ DETEKT1_CLI=1.23.8
 DETEKT1_OLDEST_CLI=1.22.0
 DETEKT2_CLI=$(sed -n 's/^detekt2 *= *"\(.*\)"/\1/p' gradle/libs.versions.toml)
 GOLDEN_JAR_VERSION=1.4.0
-# rules added after $GOLDEN_JAR_VERSION, as an ERE alternation (A|B)
+# findings the $GOLDEN_JAR_VERSION jar can't report, as an ERE alternation (A|B) of a rule id added after it,
+# or a rule id plus the start of a message added after it
 NEW_SINCE_GOLDEN="UnnecessaryLayoutWrapper"
+NEW_SINCE_GOLDEN+="|ComposableParametersOrdering Slot &quot;"
+NEW_SINCE_GOLDEN+="|ComposableParametersOrdering Required composable slot &quot;"
+NEW_SINCE_GOLDEN+="|UnnecessaryEventHandlerParameter Unnecessary event callback arguments\\. Move constant &quot;"
+# messages reworded after $GOLDEN_JAR_VERSION, as sed substitutions of the current text by the golden one
+REWORDED_SINCE_GOLDEN='s/\(ComposableParametersOrdering .*, optional parameters\)$/\1, composable slots/'
 MAVEN=https://repo1.maven.org/maven2
 OUT=build/smoke
 mkdir -p "$OUT"
@@ -61,8 +67,7 @@ check "detekt2 (detekt-cli $DETEKT2_CLI)" "$OUT/detekt2.xml"
 if [ "${1:-}" != "--no-golden" ]; then
   golden=$(fetch "ru/kode/detekt-rules-compose/$GOLDEN_JAR_VERSION/detekt-rules-compose-$GOLDEN_JAR_VERSION.jar")
   run golden "$cli1" "$golden" "xml:$OUT/golden.xml"
-  # rules added after $GOLDEN_JAR_VERSION are not in the golden jar
-  grep -vE " ($NEW_SINCE_GOLDEN) " smoke/expected-findings.txt > "$OUT/golden-expected.txt"
+  grep -vE " ($NEW_SINCE_GOLDEN)" smoke/expected-findings.txt | sed "$REWORDED_SINCE_GOLDEN" > "$OUT/golden-expected.txt"
   check "golden $GOLDEN_JAR_VERSION (detekt-cli $DETEKT1_CLI)" "$OUT/golden.xml" "$OUT/golden-expected.txt"
 fi
 
