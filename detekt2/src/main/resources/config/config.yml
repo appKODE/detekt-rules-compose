@@ -10,6 +10,7 @@ compose:
     active: false
   UnnecessaryEventHandlerParameter:
     active: true
+    reportConstantArguments: true
   ComposableParametersOrdering:
     active: true
     trailingSlotNames: [ 'content' ]

@@ -11,11 +11,15 @@ import io.gitlab.arturbosch.detekt.rules.fqNameOrNull
 import io.gitlab.arturbosch.detekt.rules.hasAnnotation
 import org.jetbrains.kotlin.builtins.isFunctionType
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
+import org.jetbrains.kotlin.descriptors.ClassKind
+import org.jetbrains.kotlin.descriptors.PropertyDescriptor
 import org.jetbrains.kotlin.descriptors.isSealed
+import org.jetbrains.kotlin.load.java.descriptors.JavaPropertyDescriptor
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtLambdaExpression
+import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
@@ -101,6 +105,18 @@ internal class BindingContextComposeSemantic(
   override fun lambdaHasImplicitIt(lambda: KtLambdaExpression): Boolean {
     if (lambda.functionLiteral.hasParameterSpecification()) return false
     return bindingContext[BindingContext.FUNCTION, lambda.functionLiteral]?.valueParameters?.size == 1
+  }
+
+  override fun isConstantReference(reference: KtNameReferenceExpression): Boolean {
+    return when (val target = bindingContext[BindingContext.REFERENCE_TARGET, reference]) {
+      // Kotlin constants only: a Java `static final` field is a const JavaPropertyDescriptor here
+      is PropertyDescriptor -> target.isConst && target !is JavaPropertyDescriptor
+
+      // companion objects are OBJECT too
+      is ClassDescriptor -> target.kind == ClassKind.ENUM_ENTRY || target.kind == ClassKind.OBJECT
+
+      else -> false
+    }
   }
 }
 

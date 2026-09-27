@@ -3,6 +3,7 @@ package ru.kode.detekt.rule.compose.shared
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtLambdaExpression
+import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 
 interface ComposeSemantic {
   fun isComposableCall(call: KtCallExpression, composableAnnotationPackage: String): Boolean
@@ -22,4 +23,10 @@ interface ComposeSemantic {
 
   /** Whether [lambda] has an implicit `it` parameter; false when that can't be resolved. */
   fun lambdaHasImplicitIt(lambda: KtLambdaExpression): Boolean
+
+  /**
+   * Whether [reference] resolves to a Kotlin `const val` (not a Java `static final` field), an enum entry or a named
+   * or companion object; false when it can't be resolved.
+   */
+  fun isConstantReference(reference: KtNameReferenceExpression): Boolean
 }

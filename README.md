@@ -10,7 +10,7 @@ Here are some highlights of rules in this rule set:
 
 - `ReusedModifierInstance` finds usages of `modifier` parameter on non-top-level children of a composable function. This tends to happen during refactorings and often leads to incorrect rendering of a composable
 
-- `UnnecessaryEventHandlerParameter` suggests hoisting event argument passing to the upper level which often simplifies individual composable components
+- `UnnecessaryEventHandlerParameter` suggests hoisting event argument passing (state parameter access and constants) to the upper level which often simplifies individual composable components (`reportConstantArguments: false` skips constants)
 
 - `ModifierHeightWithText` suggests using `Modifier.heightIn()` instead of `Modifier.height()` on a layouts which have `Text` children, so that if the text turns out to be long and would wrap, layout will not cut it off
 
@@ -62,6 +62,7 @@ compose:
     active: true
   UnnecessaryEventHandlerParameter:
     active: true
+    reportConstantArguments: true
   ComposableEventParameterNaming:
     active: true
   ComposableParametersOrdering:

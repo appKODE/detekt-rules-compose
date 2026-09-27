@@ -8,6 +8,7 @@ import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtLambdaExpression
+import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
 import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
@@ -160,6 +161,35 @@ class ComposeSemanticContractTest : ShouldSpec({
     )
   }
 
+  should("detect references to const vals, enum entries and objects") {
+    val answers = withComposeSemantic(environment, FIXTURE) { semantic, file ->
+      file.declarations.filterIsInstance<KtNamedFunction>()
+        .single { it.name == "constants" }
+        .collectDescendantsOfType<KtCallExpression>()
+        .map { it.valueArguments.single().getArgumentExpression()!! }
+        .associate { argument ->
+          val reference = (argument as? KtDotQualifiedExpression)?.selectorExpression ?: argument
+          argument.text to semantic.isConstantReference(reference as KtNameReferenceExpression)
+        }
+    }
+
+    answers shouldBe mapOf(
+      "LIMIT" to true,
+      "Holder.MAX" to true,
+      "Holder.Companion" to true,
+      // Kotlin constants only: a Java `static final` field is not one, a Java enum entry is
+      "Integer.MAX_VALUE" to false,
+      "java.util.concurrent.TimeUnit.SECONDS" to true,
+      "Kind.A" to true,
+      "Back" to true,
+      "Intent.Close" to true,
+      "notConst" to false,
+      "local" to false,
+      "value" to false,
+      "Kind.A.ordinal" to false,
+    )
+  }
+
   should("detect sealed receiver types and direct sealed supertypes") {
     val answers = withComposeSemantic(environment, FIXTURE) { semantic, file ->
       file.collectDescendantsOfType<KtDotQualifiedExpression>()
@@ -242,6 +272,29 @@ private val FIXTURE = composeSnippet(
       items.forEach { log("x") }
       items.forEach { item -> log("x") }
       run { log("x") }
+    }
+
+    const val LIMIT = 1
+    val notConst = 2
+    class Holder { companion object { const val MAX = 3 } }
+    object Back
+    sealed class Intent { data object Close : Intent() }
+    fun take(value: Any?) {}
+
+    fun constants(value: Int) {
+      val local = 1
+      take(LIMIT)
+      take(Holder.MAX)
+      take(Holder.Companion)
+      take(Integer.MAX_VALUE)
+      take(java.util.concurrent.TimeUnit.SECONDS)
+      take(Kind.A)
+      take(Back)
+      take(Intent.Close)
+      take(notConst)
+      take(local)
+      take(value)
+      take(Kind.A.ordinal)
     }
 
     fun receivers(
