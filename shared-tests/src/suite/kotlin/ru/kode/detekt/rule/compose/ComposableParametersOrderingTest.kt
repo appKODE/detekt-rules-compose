@@ -1,9 +1,11 @@
 package ru.kode.detekt.rule.compose
 
+import dev.detekt.test.TestConfig
 import dev.detekt.test.lint
 import io.kotest.core.spec.style.ShouldSpec
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
+import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
 
 class ComposableParametersOrderingTest : ShouldSpec() {
@@ -353,7 +355,7 @@ class ComposableParametersOrderingTest : ShouldSpec() {
         findings shouldHaveSize 1
       }
 
-      should("report multiple trailing required composable slots and some are non-trailing") {
+      should("not report a required composable slot among required parameters") {
         // language=kotlin
         val code = """
         @Composable
@@ -368,10 +370,11 @@ class ComposableParametersOrderingTest : ShouldSpec() {
         """.trimIndent()
 
         val findings = ComposableParametersOrdering().lint(code)
-        findings shouldHaveSize 1
+
+        findings.shouldBeEmpty()
       }
 
-      should("not report mixing trailing optional/required composable slots") {
+      should("report a required composable slot after optional parameters which is not the last one") {
         // language=kotlin
         val code = """
         @Composable
@@ -386,7 +389,10 @@ class ComposableParametersOrderingTest : ShouldSpec() {
 
         val findings = ComposableParametersOrdering().lint(code)
 
-        findings.shouldBeEmpty()
+        findings shouldHaveSize 1
+        findings.single().message shouldBe
+          "Required composable slot \"content1\" after optional parameters should be the last parameter"
+        findings.single().shouldStartAt(code, "content1:")
       }
 
       should("not report trailing event handler") {
@@ -437,6 +443,8 @@ class ComposableParametersOrderingTest : ShouldSpec() {
         val findings = ComposableParametersOrdering().lint(code)
 
         findings shouldHaveSize 1
+        findings.single().message shouldBe "Slot \"content\" should be the last parameter"
+        findings.single().shouldStartAt(code, "content:")
       }
 
       should("report if optional slots are mixed with non-slot optional parameters") {
@@ -472,6 +480,199 @@ class ComposableParametersOrderingTest : ShouldSpec() {
         val findings = ComposableParametersOrdering().lint(code)
 
         findings shouldHaveSize 1
+      }
+    }
+
+    context("trailing slots") {
+      should("not report composable slots which are not forced to the end (#40)") {
+        // language=kotlin
+        val code = """
+        @Composable
+        fun Foo(
+          state: FooState,
+          toolbar: @Composable () -> Unit,
+          modifier: Modifier = Modifier,
+          bottomBar: @Composable () -> Unit = {},
+          showFab: Boolean = false,
+          content: @Composable () -> Unit,
+        ) {
+        }
+
+        @Composable
+        fun User(
+          name: String,
+          followers: Int,
+          avatar: @Composable () -> Unit,
+          modifier: Modifier = Modifier,
+        ) {
+        }
+
+        @Composable
+        fun AlertDialog(
+          onDismissRequest: () -> Unit,
+          buttons: @Composable () -> Unit,
+          modifier: Modifier = Modifier,
+          title: (@Composable () -> Unit)? = null,
+          text: (@Composable () -> Unit)? = null,
+          shape: Shape = MaterialTheme.shapes.medium,
+        ) {
+        }
+        """.trimIndent()
+
+        val findings = ComposableParametersOrdering().lint(code)
+
+        findings.shouldBeEmpty()
+      }
+
+      should("report a trailing slot name which is not the last parameter") {
+        // language=kotlin
+        val code = """
+        @Composable
+        fun Test(
+          title: String,
+          content: @Composable () -> Unit,
+          modifier: Modifier = Modifier,
+        ) {
+        }
+        """.trimIndent()
+
+        val findings = ComposableParametersOrdering().lint(code)
+
+        findings shouldHaveSize 1
+        findings.single().message shouldBe "Slot \"content\" should be the last parameter"
+        findings.single().shouldStartAt(code, "content:")
+      }
+
+      should("report a non-composable trailing slot name which is not the last parameter") {
+        // language=kotlin
+        val code = """
+        @Composable
+        fun Test(
+          content: LazyListScope.() -> Unit,
+          modifier: Modifier = Modifier,
+        ) {
+        }
+        """.trimIndent()
+
+        val findings = ComposableParametersOrdering().lint(code)
+
+        findings shouldHaveSize 1
+        findings.single().message shouldBe "Slot \"content\" should be the last parameter"
+        findings.single().shouldStartAt(code, "content:")
+      }
+
+      should("report a nullable composable trailing slot name which is not the last parameter") {
+        // language=kotlin
+        val code = """
+        @Composable
+        fun Test(
+          title: String,
+          content: (@Composable () -> Unit)?,
+          modifier: Modifier = Modifier,
+        ) {
+        }
+        """.trimIndent()
+
+        val findings = ComposableParametersOrdering().lint(code)
+
+        findings shouldHaveSize 1
+        findings.single().message shouldBe "Slot \"content\" should be the last parameter"
+        findings.single().shouldStartAt(code, "content:")
+      }
+
+      should("not report a non-slot parameter with a trailing slot name") {
+        // language=kotlin
+        val code = """
+        @Composable
+        fun Test(
+          content: String,
+          modifier: Modifier = Modifier,
+        ) {
+        }
+        """.trimIndent()
+
+        val findings = ComposableParametersOrdering().lint(code)
+
+        findings.shouldBeEmpty()
+      }
+
+      should("use configured trailing slot names") {
+        // language=kotlin
+        val code = """
+        @Composable
+        fun Test(
+          mainContent: @Composable () -> Unit,
+          modifier: Modifier = Modifier,
+          content: @Composable () -> Unit = {},
+        ) {
+        }
+        """.trimIndent()
+
+        val findings = ComposableParametersOrdering(
+          TestConfig("trailingSlotNames" to listOf("mainContent")),
+        ).lint(code)
+
+        findings shouldHaveSize 1
+        findings.single().message shouldBe "Slot \"mainContent\" should be the last parameter"
+        findings.single().shouldStartAt(code, "mainContent:")
+      }
+
+      should("report the first of several required composable slots after optional parameters") {
+        // language=kotlin
+        val code = """
+        @Composable
+        fun Test(
+          modifier: Modifier = Modifier,
+          topBar: @Composable () -> Unit,
+          body: @Composable () -> Unit,
+        ) {
+        }
+        """.trimIndent()
+
+        val findings = ComposableParametersOrdering().lint(code)
+
+        findings shouldHaveSize 1
+        findings.single().message shouldBe
+          "Required composable slot \"topBar\" after optional parameters should be the last parameter"
+        findings.single().shouldStartAt(code, "topBar:")
+      }
+
+      should("report a required composable slot after optional parameters which are all trailing lambdas") {
+        // language=kotlin
+        val code = """
+        @Composable
+        fun Test(
+          title: String,
+          footer: (@Composable () -> Unit)? = null,
+          header: @Composable () -> Unit,
+          content: @Composable () -> Unit,
+        ) {
+        }
+        """.trimIndent()
+
+        val findings = ComposableParametersOrdering().lint(code)
+
+        findings shouldHaveSize 1
+        findings.single().message shouldBe
+          "Required composable slot \"header\" after optional parameters should be the last parameter"
+        findings.single().shouldStartAt(code, "header:")
+      }
+
+      should("not report several required composable slots when there are no optional parameters") {
+        // language=kotlin
+        val code = """
+        @Composable
+        fun Test(
+          title: String,
+          topBar: @Composable () -> Unit,
+          body: @Composable () -> Unit,
+        ) {
+        }
+        """.trimIndent()
+
+        val findings = ComposableParametersOrdering().lint(code)
+
+        findings.shouldBeEmpty()
       }
     }
 

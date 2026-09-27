@@ -16,7 +16,7 @@ Here are some highlights of rules in this rule set:
 
 - `ComposableEventParameterNaming` ensures that all event handler parameters of composable functions are named in the same Compose-like style, i.e. they have `on` prefix and do not use past tense
 
-- `ComposableParametersOrdering` suggests the correct grouping and order of composable functions' parameters, ensures the correct position of the `Modifier` parameter
+- `ComposableParametersOrdering` suggests the correct grouping and order of composable functions' parameters, ensures the correct position of the `Modifier` parameter and keeps slots named in `trailingSlotNames` (default `content`) last
 
 - `ModifierDefaultValue` ensures that `modifier` parameter has a correct default value
 
@@ -66,6 +66,7 @@ compose:
     active: true
   ComposableParametersOrdering:
     active: true
+    trailingSlotNames: [ 'content' ]
   ModifierHeightWithText:
     active: true
   MissingModifierDefaultValue:

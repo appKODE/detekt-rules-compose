@@ -12,6 +12,7 @@ compose:
     active: true
   ComposableParametersOrdering:
     active: true
+    trailingSlotNames: [ 'content' ]
   ModifierDefaultValue:
     active: true
   MissingModifierDefaultValue:

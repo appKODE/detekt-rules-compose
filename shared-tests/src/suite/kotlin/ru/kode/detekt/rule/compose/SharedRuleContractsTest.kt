@@ -75,7 +75,7 @@ private val expectedFindings = mapOf(
     ),
   "ComposableParametersOrdering" to (
     "enabled: Boolean = false" to
-      "Composable function parameters should follow this order: required parameters, modifier parameter, optional parameters, composable slots"
+      "Composable function parameters should follow this order: required parameters, modifier parameter, optional parameters"
     ),
   "ConditionCouldBeLifted" to (
     "if (printValue)" to

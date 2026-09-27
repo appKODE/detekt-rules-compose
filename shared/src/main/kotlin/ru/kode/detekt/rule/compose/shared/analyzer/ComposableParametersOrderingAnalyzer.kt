@@ -11,7 +11,12 @@ import ru.kode.detekt.rule.compose.shared.isModifier
  * Checks that parameters of Composable functions have a correct order:
  *
  * 1. Required parameters come first
- * 2. Optional parameters come after required
+ * 2. Optional parameters come after required, the `modifier` parameter first among them
+ * 3. Slots named in [trailingSlotNames] (`content` by default) come last, so they can be passed as a trailing lambda
+ *
+ * Other composable slots are not forced to the end: a required slot can stay among the required parameters and an
+ * optional one among the optional parameters. Trailing lambdas may follow the optional parameters, but only the last
+ * parameter may be a required composable slot there.
  *
  * Non-compliant:
  *
@@ -33,36 +38,47 @@ import ru.kode.detekt.rule.compose.shared.isModifier
  * )
  * ```
  */
-class ComposableParametersOrderingAnalyzer {
+class ComposableParametersOrderingAnalyzer(private val trailingSlotNames: List<String> = listOf("content")) {
   fun analyze(function: KtNamedFunction): List<ComposeDiagnostic> {
     if (!function.hasAnnotationNamed("Composable")) return emptyList()
 
     val valueParameters = function.valueParameters.dropLastWhile { it.isLambda() }
     val lastRequiredIndex = valueParameters.indexOfLast { !it.hasDefaultValue() }
     val firstOptionalIndex = valueParameters.indexOfFirst { it.hasDefaultValue() }
-    val lastOptionalIndex = valueParameters.indexOfLast { it.hasDefaultValue() }
-    val firstComposableSlotIndex = function.valueParameters.indexOfFirst { it.isComposableSlot() }
 
     if (firstOptionalIndex in 0 until lastRequiredIndex) {
       val node = valueParameters[firstOptionalIndex]
       return listOf(
         ComposeDiagnostic(
           "Composable function parameters should follow this order: required parameters, modifier parameter, " +
-            "optional parameters, composable slots",
+            "optional parameters",
           node,
         ),
       )
     }
 
-    if (firstComposableSlotIndex >= 0 &&
-      (firstComposableSlotIndex < lastRequiredIndex || firstComposableSlotIndex < lastOptionalIndex)
-    ) {
-      val node = valueParameters[firstComposableSlotIndex]
+    val lastParameter = function.valueParameters.lastOrNull()
+    val misplacedTrailingSlot = function.valueParameters.firstOrNull {
+      it != lastParameter && it.name in trailingSlotNames && it.isLambda()
+    }
+    if (misplacedTrailingSlot != null) {
+      return listOf(
+        ComposeDiagnostic("Slot \"${misplacedTrailingSlot.name}\" should be the last parameter", misplacedTrailingSlot),
+      )
+    }
+
+    // only the last parameter can be passed as a trailing lambda, other required slots belong to required parameters
+    val firstDefaultIndex = function.valueParameters.indexOfFirst { it.hasDefaultValue() }
+    val misplacedRequiredSlot = function.valueParameters.withIndex().firstOrNull { (index, parameter) ->
+      firstDefaultIndex in 0 until index && parameter != lastParameter &&
+        parameter.isComposableSlot() && !parameter.hasDefaultValue()
+    }?.value
+    if (misplacedRequiredSlot != null) {
       return listOf(
         ComposeDiagnostic(
-          "Composable function parameters should follow this order: required parameters, modifier parameter, " +
-            "optional parameters, composable slots",
-          node,
+          "Required composable slot \"${misplacedRequiredSlot.name}\" after optional parameters should be the " +
+            "last parameter",
+          misplacedRequiredSlot,
         ),
       )
     }
