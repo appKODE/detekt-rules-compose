@@ -15,6 +15,7 @@ import org.jetbrains.kotlin.descriptors.isSealed
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtLambdaExpression
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
@@ -95,6 +96,11 @@ internal class BindingContextComposeSemantic(
     return type.constructor.supertypes.any { superType ->
       (superType.constructor.declarationDescriptor as? ClassDescriptor)?.isSealed() == true
     }
+  }
+
+  override fun lambdaHasImplicitIt(lambda: KtLambdaExpression): Boolean {
+    if (lambda.functionLiteral.hasParameterSpecification()) return false
+    return bindingContext[BindingContext.FUNCTION, lambda.functionLiteral]?.valueParameters?.size == 1
   }
 }
 

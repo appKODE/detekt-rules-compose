@@ -3,11 +3,14 @@ package ru.kode.detekt.rule.compose
 import dev.detekt.test.utils.createEnvironment
 import io.kotest.core.spec.style.ShouldSpec
 import io.kotest.matchers.shouldBe
+import org.jetbrains.kotlin.psi.KtBlockExpression
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
 import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtLambdaExpression
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
+import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
 import ru.kode.detekt.rule.compose.shared.ComposeSemantic
 import ru.kode.detekt.rule.compose.snippet.composeSnippet
 
@@ -135,6 +138,28 @@ class ComposeSemanticContractTest : ShouldSpec({
     )
   }
 
+  should("detect lambdas with an implicit it parameter, including stdlib calls") {
+    val answers = withComposeSemantic(environment, FIXTURE) { semantic, file ->
+      file.declarations.filterIsInstance<KtNamedFunction>()
+        .single { it.name == "lambdas" }
+        .collectDescendantsOfType<KtLambdaExpression>()
+        .associate { lambda ->
+          lambda.parentsWithSelf.first { it.parent is KtBlockExpression }.text to semantic.lambdaHasImplicitIt(lambda)
+        }
+    }
+
+    answers shouldBe mapOf(
+      "Pager { slot() }" to true,
+      "Pager { page -> slot() }" to false,
+      "Pager { -> slot() }" to false,
+      "ScopedRow { slot() }" to false,
+      "Box { slot() }" to false,
+      "items.forEach { log(\"x\") }" to true,
+      "items.forEach { item -> log(\"x\") }" to false,
+      "run { log(\"x\") }" to false,
+    )
+  }
+
   should("detect sealed receiver types and direct sealed supertypes") {
     val answers = withComposeSemantic(environment, FIXTURE) { semantic, file ->
       file.collectDescendantsOfType<KtDotQualifiedExpression>()
@@ -185,6 +210,7 @@ private val FIXTURE = composeSnippet(
     fun NotComposable(content: () -> Unit) {}
     fun log(message: String) {}
     fun items(vararg elements: Int) {}
+    @Composable fun Pager(content: @Composable (Int) -> Unit) {}
 
     @Composable
     fun Probe(slot: @Composable () -> Unit, callback: () -> Unit) {
@@ -204,6 +230,18 @@ private val FIXTURE = composeSnippet(
       log("x")
       items()
       items(1, 2)
+    }
+
+    @Composable
+    fun lambdas(slot: @Composable () -> Unit, items: List<Int>) {
+      Pager { slot() }
+      Pager { page -> slot() }
+      Pager { -> slot() }
+      ScopedRow { slot() }
+      Box { slot() }
+      items.forEach { log("x") }
+      items.forEach { item -> log("x") }
+      run { log("x") }
     }
 
     fun receivers(

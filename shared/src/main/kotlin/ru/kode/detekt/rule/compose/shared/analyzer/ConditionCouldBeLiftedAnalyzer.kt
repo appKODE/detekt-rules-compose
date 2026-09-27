@@ -4,10 +4,13 @@ import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtIfExpression
 import org.jetbrains.kotlin.psi.KtLambdaExpression
+import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.KtTreeVisitorVoid
+import org.jetbrains.kotlin.psi.KtValueArgumentName
 import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
 import org.jetbrains.kotlin.psi.psiUtil.getChildrenOfType
+import org.jetbrains.kotlin.psi.psiUtil.getReceiverExpression
 import ru.kode.detekt.rule.compose.shared.ComposeDiagnostic
 import ru.kode.detekt.rule.compose.shared.ComposeSemantic
 import ru.kode.detekt.rule.compose.shared.hasAnnotationNamed
@@ -49,6 +52,10 @@ data class ConditionCouldBeLiftedOptions(
  *   active: true
  *   ignoreCallsWithArgumentNames: [ 'modifier', 'contentAlignment' ]
  * ```
+ *
+ * A condition on a name declared inside the content lambda (its parameters, local `val`s, local functions) is not
+ * reported. A local `val` derived from an outer one of the same name (`val items = items.sorted()`) counts as the
+ * outer declaration, so such a condition is still reported.
  */
 class ConditionCouldBeLiftedAnalyzer(
   private val options: ConditionCouldBeLiftedOptions,
@@ -67,6 +74,8 @@ class ConditionCouldBeLiftedAnalyzer(
           val conditionalExpression = contentComposableLambda.bodyExpression
             ?.getChildrenOfType<KtIfExpression>()
             ?.singleOrNull()
+            // a condition on what the content lambda declares can't be lifted out of it
+            ?.takeUnless { it.conditionUsesNamesDeclaredIn(contentComposableLambda, semantic) }
 
           if (conditionalExpression != null) {
             val elseExpression = conditionalExpression.`else`
@@ -112,6 +121,20 @@ class ConditionCouldBeLiftedAnalyzer(
     if (contentParameterName != "content") return null
 
     return semantic.argumentForParameterNamed(this, contentParameterName) as? KtLambdaExpression
+  }
+}
+
+private fun KtIfExpression.conditionUsesNamesDeclaredIn(
+  lambda: KtLambdaExpression,
+  semantic: ComposeSemantic,
+): Boolean {
+  val hasImplicitIt = semantic::lambdaHasImplicitIt
+  return condition?.collectDescendantsOfType<KtNameReferenceExpression>().orEmpty().any { reference ->
+    // `pagerState.page` and `check(page = 1)` don't reference a local `page`
+    if (reference.getReceiverExpression() != null || reference.parent is KtValueArgumentName) return@any false
+    val name = reference.getReferencedName()
+    // skip names the condition declares itself, like the `it` of `items.any { it > 0 }`
+    !reference.isDeclaredBetween(name, this, hasImplicitIt) && isDeclaredBetween(name, lambda, hasImplicitIt)
   }
 }
 

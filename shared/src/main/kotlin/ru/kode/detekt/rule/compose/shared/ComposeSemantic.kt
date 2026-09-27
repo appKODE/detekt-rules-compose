@@ -2,6 +2,7 @@ package ru.kode.detekt.rule.compose.shared
 
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtLambdaExpression
 
 interface ComposeSemantic {
   fun isComposableCall(call: KtCallExpression, composableAnnotationPackage: String): Boolean
@@ -18,4 +19,7 @@ interface ComposeSemantic {
   fun callHasParameterOfType(call: KtCallExpression, fqName: String): Boolean
 
   fun receiverHasSealedTypeOrSupertype(receiverExpression: KtExpression): Boolean
+
+  /** Whether [lambda] has an implicit `it` parameter; false when that can't be resolved. */
+  fun lambdaHasImplicitIt(lambda: KtLambdaExpression): Boolean
 }
