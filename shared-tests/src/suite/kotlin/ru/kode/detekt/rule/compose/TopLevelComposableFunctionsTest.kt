@@ -169,5 +169,59 @@ class TopLevelComposableFunctionsTest : ShouldSpec(
 
       findings.shouldBeEmpty()
     }
+
+    // https://github.com/appKODE/detekt-rules-compose/issues/29
+    should("report in interfaces unless allowed by config") {
+      // language=kotlin
+      val code = """
+      interface OffersProvider {
+        @Composable
+        fun Offers(id: String, modifier: Modifier = Modifier)
+      }
+      """.trimIndent()
+
+      TopLevelComposableFunctions().lint(code) shouldHaveSize 1
+      TopLevelComposableFunctions(TestConfig("allowInInterfaces" to false)).lint(code) shouldHaveSize 1
+      TopLevelComposableFunctions(TestConfig("allowInInterfaces" to true)).lint(code).shouldBeEmpty()
+    }
+
+    should("report in classes, abstract classes and objects if allowed in interfaces by config") {
+      // language=kotlin
+      val code = """
+      class Screen {
+        @Composable
+        fun Content() = Unit
+      }
+
+      abstract class ScreenAbs {
+        @Composable
+        abstract fun Content(modifier: Modifier = Modifier)
+      }
+
+      object ButtonDefaults {
+        @Composable
+        fun contentColor() = Unit
+      }
+      """.trimIndent()
+
+      val findings = TopLevelComposableFunctions(TestConfig("allowInInterfaces" to true)).lint(code)
+
+      findings shouldHaveSize 3
+    }
+
+    should("decide on an interface companion object by allowInObjects, not allowInInterfaces") {
+      // language=kotlin
+      val code = """
+      interface OffersProvider {
+        companion object {
+          @Composable
+          fun Offers() = Unit
+        }
+      }
+      """.trimIndent()
+
+      TopLevelComposableFunctions(TestConfig("allowInInterfaces" to true)).lint(code) shouldHaveSize 1
+      TopLevelComposableFunctions(TestConfig("allowInObjects" to true)).lint(code).shouldBeEmpty()
+    }
   },
 )

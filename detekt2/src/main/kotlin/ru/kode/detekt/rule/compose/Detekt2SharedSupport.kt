@@ -6,12 +6,18 @@ import dev.detekt.api.Rule
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaEnumEntrySymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaKotlinPropertySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolModality
 import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
 import org.jetbrains.kotlin.analysis.api.types.symbol
+import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtLambdaExpression
+import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import ru.kode.detekt.rule.compose.shared.ComposeDiagnostic
 import ru.kode.detekt.rule.compose.shared.ComposeSemantic
@@ -76,6 +82,22 @@ internal object AnalysisApiComposeSemantic : ComposeSemantic {
         receiverTypeSymbol.superTypes.any { superType ->
           (superType.symbol as? KaClassSymbol)?.modality == KaSymbolModality.SEALED
         }
+    }
+  }
+
+  override fun lambdaHasImplicitIt(lambda: KtLambdaExpression): Boolean {
+    if (lambda.functionLiteral.hasParameterSpecification()) return false
+    return analyze(lambda) { lambda.functionLiteral.symbol.valueParameters.size == 1 }
+  }
+
+  override fun isConstantReference(reference: KtNameReferenceExpression): Boolean {
+    return analyze(reference) {
+      when (val symbol = reference.mainReference.resolveToSymbol()) {
+        is KaKotlinPropertySymbol -> symbol.isConst
+        is KaEnumEntrySymbol -> true
+        is KaClassSymbol -> symbol.classKind == KaClassKind.OBJECT || symbol.classKind == KaClassKind.COMPANION_OBJECT
+        else -> false
+      }
     }
   }
 }

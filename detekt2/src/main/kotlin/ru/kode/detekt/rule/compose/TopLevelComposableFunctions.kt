@@ -12,9 +12,11 @@ class TopLevelComposableFunctions(config: Config = Config.empty) :
 
   private val allowInObjects by config(defaultValue = false)
 
+  private val allowInInterfaces by config(defaultValue = false)
+
   private val analyzer by lazy {
     TopLevelComposableFunctionsAnalyzer(
-      TopLevelComposableFunctionsOptions(allowInObjects = allowInObjects),
+      TopLevelComposableFunctionsOptions(allowInObjects = allowInObjects, allowInInterfaces = allowInInterfaces),
     )
   }
 

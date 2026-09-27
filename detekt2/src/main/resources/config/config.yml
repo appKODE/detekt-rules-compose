@@ -10,8 +10,10 @@ compose:
     active: false
   UnnecessaryEventHandlerParameter:
     active: true
+    reportConstantArguments: true
   ComposableParametersOrdering:
     active: true
+    trailingSlotNames: [ 'content' ]
   ModifierDefaultValue:
     active: true
   MissingModifierDefaultValue:
@@ -19,8 +21,11 @@ compose:
   TopLevelComposableFunctions:
     active: false
     allowInObjects: false
+    allowInInterfaces: false
   ComposableFunctionName:
     active: true
   ConditionCouldBeLifted:
     active: false
     ignoreCallsWithArgumentNames: [ 'modifier' ]
+  UnnecessaryLayoutWrapper:
+    active: false

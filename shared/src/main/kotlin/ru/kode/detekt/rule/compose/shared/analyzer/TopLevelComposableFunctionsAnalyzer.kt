@@ -1,5 +1,6 @@
 package ru.kode.detekt.rule.compose.shared.analyzer
 
+import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.KtObjectDeclaration
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
@@ -9,13 +10,15 @@ import ru.kode.detekt.rule.compose.shared.isOverrideLike
 
 data class TopLevelComposableFunctionsOptions(
   val allowInObjects: Boolean = false,
+  val allowInInterfaces: Boolean = false,
 )
 
 /**
  * Checks that composable function is defined as a top-level function.
  *
  * `allowInObjects` config property can be used to control if usage of composable functions
- * in `object` is permitted.
+ * in `object` is permitted, `allowInInterfaces` does the same for `interface`s (e.g. a composable
+ * provided by another module through DI). Classes are always reported.
  *
  * Non-compliant:
  *
@@ -47,9 +50,11 @@ class TopLevelComposableFunctionsAnalyzer(
   fun analyze(function: KtNamedFunction): List<ComposeDiagnostic> {
     if (!function.hasAnnotationNamed("Composable")) return emptyList()
 
+    val container = function.containingClassOrObject
     if (!function.isTopLevel &&
       !function.isOverrideLike() &&
-      (function.containingClassOrObject !is KtObjectDeclaration || !options.allowInObjects)
+      (container !is KtObjectDeclaration || !options.allowInObjects) &&
+      ((container as? KtClass)?.isInterface() != true || !options.allowInInterfaces)
     ) {
       return listOf(
         ComposeDiagnostic(

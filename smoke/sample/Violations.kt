@@ -75,3 +75,34 @@ fun Liftable(visible: Boolean) {
     }
   }
 }
+
+@Composable
+fun Wrapped() {
+  Column {
+    Row {
+      Text("a")
+    }
+  }
+}
+
+@Composable
+fun TrailingSlot(title: String, content: @Composable () -> Unit, footer: @Composable () -> Unit) {
+  Text(title)
+  content()
+  footer()
+}
+
+@Composable
+fun RequiredSlotAfterOptional(modifier: Modifier = Modifier, icon: @Composable () -> Unit, label: @Composable () -> Unit) {
+  Row(modifier = modifier) {
+    icon()
+    label()
+  }
+}
+
+enum class Mode { Compact, Full }
+
+@Composable
+fun ConstantArgument(onModeChange: (Mode) -> Unit) {
+  Row { onModeChange(Mode.Full) }
+}

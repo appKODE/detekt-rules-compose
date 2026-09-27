@@ -6,9 +6,13 @@ Violations.kt:27:27 ModifierHeightWithText Composable uses &quot;height&quot; mo
 Violations.kt:32:1 PublicComposablePreview Preview composable must not be public
 Violations.kt:39:17 ComposableEventParameterNaming Invalid event parameter name &quot;clicked&quot;. Use names like &quot;onClick&quot;, &quot;onValueChange&quot; etc
 Violations.kt:39:38 ComposableEventParameterNaming Invalid event parameter name &quot;onValueChanged&quot;. Do not use past tense. For example: &quot;onClicked&quot; &#x2192; &quot;onClick&quot;
-Violations.kt:44:24 ComposableParametersOrdering Composable function parameters should follow this order: required parameters, modifier parameter, optional parameters, composable slots
+Violations.kt:44:24 ComposableParametersOrdering Composable function parameters should follow this order: required parameters, modifier parameter, optional parameters
 Violations.kt:49:18 ModifierDefaultValue Modifier parameter should not have a default value other than &quot;Modifier&quot;
 Violations.kt:54:20 MissingModifierDefaultValue Modifier parameter should have a default value: &quot;modifier = Modifier&quot;
 Violations.kt:59:3 TopLevelComposableFunctions Composable functions should be defined as top-level functions
 Violations.kt:66:5 ComposableFunctionName Composable function &apos;lowercaseComposable&apos; should start with upper case
 Violations.kt:73:5 ConditionCouldBeLifted Condition could be lifted out of &quot;Column&quot;
+Violations.kt:81:3 UnnecessaryLayoutWrapper &quot;Column&quot; has no parameters and wraps a single &quot;Row&quot;, it is likely unnecessary
+Violations.kt:89:33 ComposableParametersOrdering Slot &quot;content&quot; should be the last parameter
+Violations.kt:96:62 ComposableParametersOrdering Required composable slot &quot;icon&quot; after optional parameters should be the last parameter
+Violations.kt:106:22 UnnecessaryEventHandlerParameter Unnecessary event callback arguments. Move constant &quot;Mode.Full&quot; to the parent composable event handler and switch &quot;onModeChange&quot; type to &quot;() -&gt; Unit&quot;

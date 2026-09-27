@@ -8,6 +8,7 @@ import dev.detekt.test.utils.createEnvironment
 import io.kotest.core.spec.style.ShouldSpec
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
+import io.kotest.matchers.shouldBe
 import ru.kode.detekt.rule.compose.snippet.composeSnippet
 
 class ReusedModifierInstanceTest : ShouldSpec({
@@ -342,6 +343,177 @@ fun Test(
       @Composable
       fun Test(modifier: Modifier) = Row(modifier = modifier) {
         Text(text = "hello", modifier = Modifier.weight(1f))
+      }
+      """.trimIndent(),
+    )
+
+    val findings = createRule().lintWithContext(environment, code)
+
+    findings.shouldBeEmpty()
+  }
+
+  // https://github.com/appKODE/detekt-rules-compose/issues/30
+  should("not error on a lambda parameter shadowing modifier") {
+    // language=kotlin
+    val code = composeSnippet(
+      """
+      @Composable
+      fun Extra(a: @Composable (Modifier) -> Unit) {}
+      @Composable
+      fun Test(
+        modifier: Modifier = Modifier,
+      ) {
+        Column(modifier) {
+          Extra { modifier ->
+            Text("Hi", modifier)
+          }
+        }
+      }
+      """.trimIndent(),
+    )
+
+    val findings = createRule().lintWithContext(environment, code)
+
+    findings.shouldBeEmpty()
+  }
+
+  should("error on modifier inside a lambda whose parameter has another name") {
+    // language=kotlin
+    val code = composeSnippet(
+      """
+      @Composable
+      fun Extra(a: @Composable (Modifier) -> Unit) {}
+      @Composable
+      fun Test(
+        modifier: Modifier = Modifier,
+      ) {
+        Column(modifier) {
+          Extra { other ->
+            Text("Hi", modifier)
+          }
+        }
+      }
+      """.trimIndent(),
+    )
+
+    val findings = createRule().lintWithContext(environment, code)
+
+    findings shouldHaveSize 1
+    findings.single().message shouldBe
+      "Composable uses \"modifier\" on the wrong level, non-direct children should use \"Modifier\""
+    findings.single().shouldStartAt(code, "Text(\"Hi\", modifier)")
+  }
+
+  should("not error on a local val or a destructured val shadowing modifier") {
+    // language=kotlin
+    val code = composeSnippet(
+      """
+      @Composable
+      fun Test(modifier: Modifier = Modifier, pair: Pair<Modifier, Modifier>) {
+        Column(modifier) {
+          Row {
+            val modifier = Modifier.weight(1f)
+            Text("Hi", modifier)
+          }
+          Row {
+            val (modifier, other) = pair
+            Text("Hi", modifier.fillMaxSize())
+          }
+        }
+      }
+      """.trimIndent(),
+    )
+
+    val findings = createRule().lintWithContext(environment, code)
+
+    findings.shouldBeEmpty()
+  }
+
+  should("error on modifier used before a local val shadowing it") {
+    // language=kotlin
+    val code = composeSnippet(
+      """
+      @Composable
+      fun Test(modifier: Modifier = Modifier) {
+        Column(modifier) {
+          Text("Hi", modifier)
+          val modifier = Modifier.weight(1f)
+        }
+      }
+      """.trimIndent(),
+    )
+
+    val findings = createRule().lintWithContext(environment, code)
+
+    findings shouldHaveSize 1
+    findings.single().message shouldBe
+      "Composable uses \"modifier\" on the wrong level, non-direct children should use \"Modifier\""
+    findings.single().shouldStartAt(code, "Text(\"Hi\", modifier)")
+  }
+
+  should("not error on a for-loop variable shadowing modifier") {
+    // language=kotlin
+    val code = composeSnippet(
+      """
+      @Composable
+      fun Test(modifier: Modifier = Modifier, modifiers: List<Modifier>) {
+        Column(modifier) {
+          for (modifier in modifiers) {
+            Text("Hi", modifier)
+          }
+        }
+      }
+      """.trimIndent(),
+    )
+
+    val findings = createRule().lintWithContext(environment, code)
+
+    findings.shouldBeEmpty()
+  }
+
+  should("error on modifier used through a local val derived from it") {
+    // language=kotlin
+    val code = composeSnippet(
+      """
+      @Composable
+      fun Test(modifier: Modifier = Modifier) {
+        Column(modifier) {
+          Row {
+            val modifier = modifier.padding(4.dp)
+            Text("Hi", modifier)
+          }
+        }
+      }
+      """.trimIndent(),
+    )
+
+    val findings = createRule().lintWithContext(environment, code)
+
+    findings shouldHaveSize 1
+    findings.single().message shouldBe
+      "Composable uses \"modifier\" on the wrong level, non-direct children should use \"Modifier\""
+    findings.single().shouldStartAt(code, "Text(\"Hi\", modifier)")
+  }
+
+  should("not error on modifier declared by a when subject or a local object") {
+    // language=kotlin
+    val code = composeSnippet(
+      """
+      @Composable
+      fun Test(modifier: Modifier = Modifier) {
+        Column(modifier) {
+          when (val modifier = Modifier.weight(1f)) {
+            else -> Text("Hi", modifier)
+          }
+          val holder = object {
+            @Composable
+            fun Show() {
+              Text("Hi", modifier)
+            }
+
+            val modifier = Modifier.weight(1f)
+          }
+        }
       }
       """.trimIndent(),
     )

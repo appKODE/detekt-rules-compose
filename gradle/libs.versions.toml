@@ -4,6 +4,8 @@ detekt1 = "1.23.8"
 # the detekt 1 rules compile against this API: compiler PSI inlined from newer detekt (1.23.6+) breaks older 1.x at runtime
 detekt1Min = "1.23.0"
 detekt2 = "2.0.0-alpha.6"
+# Kotlin that detekt 1.23.8 embeds: its K1 compiler cannot read newer stdlib metadata in tests
+detekt1Kotlin = "2.0.21"
 koTest = "6.2.5"
 ktlint = "1.8.0"
 spotless = "8.10.3"
@@ -14,6 +16,7 @@ kover = "0.9.9"
 [libraries]
 detekt1-api-min = { module = "io.gitlab.arturbosch.detekt:detekt-api", version.ref = "detekt1Min" }
 detekt1-test = { module = "io.gitlab.arturbosch.detekt:detekt-test", version.ref = "detekt1" }
+detekt1-kotlin-stdlib = { module = "org.jetbrains.kotlin:kotlin-stdlib", version.ref = "detekt1Kotlin" }
 detekt2-api = { module = "dev.detekt:detekt-api", version.ref = "detekt2" }
 detekt2-test = { module = "dev.detekt:detekt-test", version.ref = "detekt2" }
 detekt2-test-utils = { module = "dev.detekt:detekt-test-utils", version.ref = "detekt2" }

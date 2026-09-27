@@ -10,13 +10,13 @@ Here are some highlights of rules in this rule set:
 
 - `ReusedModifierInstance` finds usages of `modifier` parameter on non-top-level children of a composable function. This tends to happen during refactorings and often leads to incorrect rendering of a composable
 
-- `UnnecessaryEventHandlerParameter` suggests hoisting event argument passing to the upper level which often simplifies individual composable components
+- `UnnecessaryEventHandlerParameter` suggests hoisting event argument passing (state parameter access and constants) to the upper level which often simplifies individual composable components (`reportConstantArguments: false` skips constants)
 
 - `ModifierHeightWithText` suggests using `Modifier.heightIn()` instead of `Modifier.height()` on a layouts which have `Text` children, so that if the text turns out to be long and would wrap, layout will not cut it off
 
 - `ComposableEventParameterNaming` ensures that all event handler parameters of composable functions are named in the same Compose-like style, i.e. they have `on` prefix and do not use past tense
 
-- `ComposableParametersOrdering` suggests the correct grouping and order of composable functions' parameters, ensures the correct position of the `Modifier` parameter
+- `ComposableParametersOrdering` suggests the correct grouping and order of composable functions' parameters, ensures the correct position of the `Modifier` parameter and keeps slots named in `trailingSlotNames` (default `content`) last
 
 - `ModifierDefaultValue` ensures that `modifier` parameter has a correct default value
 
@@ -24,9 +24,11 @@ Here are some highlights of rules in this rule set:
 
 - `PublicComposablePreview` finds and reports composable previews which are not marked as `private`
 
-- `TopLevelComposableFunctions` ensures that all composable functions are top-level functions (disabled by default; `allowInObjects: true` also allows them inside `object`s)
+- `TopLevelComposableFunctions` ensures that all composable functions are top-level functions (disabled by default; `allowInObjects: true` also allows them inside `object`s, `allowInInterfaces: true` inside `interface`s)
 
 - `ComposableFunctionName` ensures that Composable functions which return Unit should start with upper-case while the ones that return a value should start with lower case
+
+- `UnnecessaryLayoutWrapper` finds a `Box`, `Column` or `Row` without parameters which only wraps a single `Box`, `Column` or `Row`, so the child can usually be used directly (disabled by default)
 
 - and others...
 
@@ -60,10 +62,12 @@ compose:
     active: true
   UnnecessaryEventHandlerParameter:
     active: true
+    reportConstantArguments: true
   ComposableEventParameterNaming:
     active: true
   ComposableParametersOrdering:
     active: true
+    trailingSlotNames: [ 'content' ]
   ModifierHeightWithText:
     active: true
   MissingModifierDefaultValue:
@@ -73,11 +77,14 @@ compose:
   TopLevelComposableFunctions:
     active: true
     allowInObjects: false
+    allowInInterfaces: false
   ComposableFunctionName:
     active: true
   ConditionCouldBeLifted:
     active: true
     ignoreCallsWithArgumentNames: [ 'modifier', 'contentAlignment' ]
+  UnnecessaryLayoutWrapper:
+    active: true
 ```
 
 ## Detekt configuration for Compose

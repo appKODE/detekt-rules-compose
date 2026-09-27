@@ -32,6 +32,9 @@ import ru.kode.detekt.rule.compose.shared.hasAnnotationNamed
  * ```
  *
  * In this case parent container can be larger if needed.
+ *
+ * `height(IntrinsicSize.Min)` and `height(IntrinsicSize.Max)` size to the content and are not reported; they are
+ * matched by text, so a `Min` or `Max` value of another type passed to `height` is skipped too.
  */
 class ModifierHeightWithTextAnalyzer {
   fun analyze(function: KtNamedFunction): List<ComposeDiagnostic> {
@@ -48,7 +51,7 @@ class ModifierHeightWithTextAnalyzer {
           if (contentLambdaExpression != null) {
             val argumentWithHeight = expression.valueArguments.find { argument ->
               argument.getArgumentExpression()?.isModifierChainExpression() == true &&
-                argument.anyDescendantOfType<KtCallExpression> { it.calleeExpression?.text == "height" }
+                argument.anyDescendantOfType<KtCallExpression> { it.isFixedHeightCall() }
             }
 
             if (argumentWithHeight != null) {
@@ -58,7 +61,7 @@ class ModifierHeightWithTextAnalyzer {
 
               if (containsTextChild) {
                 val heightCall = argumentWithHeight
-                  .findDescendantOfType<KtCallExpression> { it.calleeExpression?.text == "height" }
+                  .findDescendantOfType<KtCallExpression> { it.isFixedHeightCall() }
                 if (heightCall != null) {
                   diagnostics += ComposeDiagnostic(
                     "Composable uses \"height\" modifier and contains a Text child. Use heightIn(min = N.dp) instead",
@@ -76,6 +79,14 @@ class ModifierHeightWithTextAnalyzer {
 
     return diagnostics
   }
+}
+
+// `height(IntrinsicSize.Min)` sizes to the content, so it can't clip the text
+private fun KtCallExpression.isFixedHeightCall(): Boolean {
+  if (calleeExpression?.text != "height") return false
+  val argument = valueArguments.singleOrNull()?.getArgumentExpression()?.text ?: return true
+  // IntrinsicSize.Min, fully qualified, or Min imported from IntrinsicSize
+  return argument.substringAfterLast("IntrinsicSize.") !in setOf("Min", "Max")
 }
 
 private fun KtValueArgument.anyDescendantOfType(predicate: (KtCallExpression) -> Boolean): Boolean {

@@ -7,6 +7,7 @@ import dev.detekt.test.lint
 import io.kotest.core.spec.style.ShouldSpec
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
+import io.kotest.matchers.shouldBe
 
 class ModifierHeightWithTextTest : ShouldSpec({
   should("report with single modifier") {
@@ -329,5 +330,90 @@ class ModifierHeightWithTextTest : ShouldSpec({
     val findings = ModifierHeightWithText().lint(code)
 
     findings.shouldBeEmpty()
+  }
+
+  // https://github.com/appKODE/detekt-rules-compose/issues/25, #34
+  listOf(
+    "IntrinsicSize.Min",
+    "IntrinsicSize.Max",
+    "Min",
+    "Max",
+    "androidx.compose.foundation.layout.IntrinsicSize.Min",
+    "androidx.compose.foundation.layout.IntrinsicSize.Max",
+  ).forEach { size ->
+    should("not report height($size) passed as a named modifier argument") {
+      // language=kotlin
+      val code = """
+        @Composable
+        fun Test() {
+          Row(
+            modifier = Modifier
+              .height($size),
+          ) {
+            Text(
+              modifier = Modifier
+                .fillMaxHeight(),
+              text = "Hello world",
+            )
+          }
+        }
+      """.trimIndent()
+
+      val findings = ModifierHeightWithText().lint(code)
+
+      findings.shouldBeEmpty()
+    }
+
+    should("not report height($size) passed as a positional modifier argument") {
+      // language=kotlin
+      val code = """
+        @Composable
+        fun Test() {
+          Row(Modifier.height($size)) {
+            Text(text = "Hello world")
+          }
+        }
+      """.trimIndent()
+
+      val findings = ModifierHeightWithText().lint(code)
+
+      findings.shouldBeEmpty()
+    }
+  }
+
+  should("report a fixed height passed as a positional modifier argument") {
+    // language=kotlin
+    val code = """
+      @Composable
+      fun Test() {
+        Row(Modifier.height(24.dp)) {
+          Text(text = "Hello world")
+        }
+      }
+    """.trimIndent()
+
+    val findings = ModifierHeightWithText().lint(code)
+
+    findings shouldHaveSize 1
+    findings.single().message shouldBe
+      "Composable uses \"height\" modifier and contains a Text child. Use heightIn(min = N.dp) instead"
+    findings.single().shouldStartAt(code, "height(24.dp)")
+  }
+
+  should("report a fixed height next to an intrinsic height") {
+    // language=kotlin
+    val code = """
+      @Composable
+      fun Test() {
+        Row(modifier = Modifier.height(IntrinsicSize.Min).height(24.dp)) {
+          Text(text = "Hello world")
+        }
+      }
+    """.trimIndent()
+
+    val findings = ModifierHeightWithText().lint(code)
+
+    findings shouldHaveSize 1
+    findings.single().shouldStartAt(code, "height(24.dp)")
   }
 })

@@ -22,3 +22,5 @@ compose:
     active: true
   ConditionCouldBeLifted:
     active: true
+  UnnecessaryLayoutWrapper:
+    active: true

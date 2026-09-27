@@ -1,5 +1,47 @@
 # Changelog
 
+## 2.1.0 - 2026-09-27
+
+### Upgrading from 2.0.0
+
+No configuration change is needed. `ComposableParametersOrdering` and `UnnecessaryEventHandlerParameter` check more
+than they did in 2.0.0 (see below), so with `maxIssues: 0` a build that passed on 2.0.0 can fail on existing code:
+fix the findings, suppress them or regenerate the baseline. To keep the 2.0.0 behaviour for constants, set
+`reportConstantArguments: false` on `UnnecessaryEventHandlerParameter`.
+
+`ComposableParametersOrdering` no longer reports a composable slot placed before other parameters and its order
+message no longer ends with ", composable slots"; baseline entries for it become unused and go away when the
+baseline is regenerated.
+
+### Changes
+
+* `ModifierHeightWithText`: `height(IntrinsicSize.Min)` and `height(IntrinsicSize.Max)` (also imported as `Min`/`Max`
+  or fully qualified) are no longer reported, they size to the content and can't clip text (#25, #34)
+* `ReusedModifierInstance` and `UnnecessaryEventHandlerParameter`: a name shadowed by a lambda or local function
+  parameter, a local `val` (unless derived from the name itself, like `val modifier = modifier.padding(4.dp)`), a
+  `for` loop variable, a catch parameter, a `when` subject or a local object property is no longer mistaken for the
+  composable's parameter (#30, #41)
+* `ConditionCouldBeLifted`: a condition on the content lambda's own parameters (including its implicit `it`, resolved
+  with type resolution) or on local `val`s declared in it before the `if` is no longer reported, it can't be lifted
+  out of the lambda; names from lambdas enclosing the layout call still are (#31)
+* `TopLevelComposableFunctions`: new `allowInInterfaces` option (default `false`) allows composables declared in
+  interfaces; classes are still reported (#29)
+* New rule `UnnecessaryLayoutWrapper` (disabled by default), based on #23 by Sergey Shevtsov: reports a `Box`,
+  `Column` or `Row` without parameters which only wraps a single `Box`, `Column` or `Row`
+* `ComposableParametersOrdering`: composable slots are no longer forced to the end, a required slot can stay among
+  the required parameters and an optional one among the optional parameters, as in Material's `TextField` and
+  `AlertDialog`. Instead, slots named in the new `trailingSlotNames` option (default `[content]`) must be the last
+  parameter, and after the first optional parameter only the last parameter may be a required composable slot, so
+  it can be passed as a trailing lambda. The order message drops ", composable slots". A required event handler or
+  other non-slot lambda after the optional parameters is still not reported, even when it isn't the last
+  parameter (#40)
+* `UnnecessaryEventHandlerParameter`: a constant argument of an event handler (a literal, a string without templates,
+  a Kotlin `const val`, an enum entry or an object, like `onUserIntent(Intent.Back)`) is now reported when every
+  call (including `onUserIntent?.invoke(...)`) passes the same constant at that position and the handler isn't also
+  passed on as a value, the parent can pass it itself. One finding per handler, listing all such constants; different
+  constants (`onCheckedChange(true)` and `onCheckedChange(false)`) are not reported. New option `reportConstantArguments` (default `true`) turns this off. Composables without state
+  parameters are now checked too (#3)
+
 ## 2.0.0 - 2026-09-27
 
 ### Upgrading from 1.4.0

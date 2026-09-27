@@ -17,6 +17,57 @@ import ru.kode.detekt.rule.compose.snippet.composeSnippet
 class ConditionCouldBeLiftedTest : ShouldSpec({
   val environment = createEnvironment()
 
+  should("report a condition on a member or named argument sharing a content lambda parameter name") {
+    // language=kotlin
+    val code = composeSnippet(
+      """
+      class PagerState(val page: Int)
+
+      @Composable fun Pager(content: @Composable (Int) -> Unit) {}
+
+      fun check(page: Int): Boolean = page > 0
+
+      @Composable
+      fun Test(pagerState: PagerState) {
+        Pager { page ->
+          if (pagerState.page == 0) Text(text = "first")
+        }
+        Pager { page ->
+          if (check(page = 1)) Text(text = "checked")
+        }
+      }
+      """,
+    )
+
+    val findings = createRule().lintWithContext(environment, code)
+
+    findings.map { it.message } shouldBe listOf(
+      "Condition could be lifted out of \"Pager\"",
+      "Condition could be lifted out of \"Pager\"",
+    )
+    findings[0].shouldStartAt(code, "if (pagerState.page")
+    findings[1].shouldStartAt(code, "if (check(page = 1))")
+  }
+
+  should("not report a condition on a local function of a content lambda") {
+    // language=kotlin
+    val code = composeSnippet(
+      """
+      @Composable
+      fun Test() {
+        Column {
+          fun ok() = true
+          if (ok()) Text(text = "ok")
+        }
+      }
+      """,
+    )
+
+    val findings = createRule().lintWithContext(environment, code)
+
+    findings.shouldBeEmpty()
+  }
+
   should("report simple non-compliant case") {
     // language=kotlin
     val code = composeSnippet(
@@ -687,6 +738,177 @@ class ConditionCouldBeLiftedTest : ShouldSpec({
     val findings = createRule().lintWithContext(environment, code)
 
     findings.shouldBeEmpty()
+  }
+
+  // https://github.com/appKODE/detekt-rules-compose/issues/31
+  should("not report a condition on a local val of a content lambda with a parameter") {
+    // language=kotlin
+    val code = composeSnippet(
+      """
+      @Composable fun HorizontalPager(pageCount: Int, content: @Composable (Int) -> Unit) {}
+
+      @Composable
+      fun Test(entries: List<String>) {
+        HorizontalPager(pageCount = entries.size) { pageIndex ->
+          val branchEntry = entries.elementAtOrNull(pageIndex)
+          if (branchEntry != null) {
+            Text(text = branchEntry)
+          }
+        }
+      }
+      """,
+    )
+
+    val findings = createRule().lintWithContext(environment, code)
+
+    findings.shouldBeEmpty()
+  }
+
+  should("not report a condition on a content lambda parameter or its implicit it") {
+    // language=kotlin
+    val code = composeSnippet(
+      """
+      @Composable fun Pager(content: @Composable (Int) -> Unit) {}
+      @Composable fun Toggle(content: @Composable (Boolean) -> Unit) {}
+
+      @Composable
+      fun Test() {
+        Pager { page ->
+          if (page == 0) Text(text = "first")
+        }
+        Pager {
+          if (it == 0) Text(text = "first")
+        }
+        Toggle { visible ->
+          if (visible) Text(text = "shown")
+        }
+      }
+      """,
+    )
+
+    val findings = createRule().lintWithContext(environment, code)
+
+    findings.shouldBeEmpty()
+  }
+
+  should("report a condition whose own lambda uses it inside a content lambda") {
+    // language=kotlin
+    val code = composeSnippet(
+      """
+      @Composable
+      fun Test(items: List<Int>) {
+        Column {
+          if (items.any { it > 0 }) Text(text = "positive")
+        }
+      }
+      """,
+    )
+
+    val findings = createRule().lintWithContext(environment, code)
+
+    findings shouldHaveSize 1
+    findings.single().message shouldBe "Condition could be lifted out of \"Column\""
+    findings.single().shouldStartAt(code, "if (items.any")
+  }
+
+  should("report a condition on a local val declared outside the content lambda") {
+    // language=kotlin
+    val code = composeSnippet(
+      """
+      @Composable fun Pager(content: @Composable (Int) -> Unit) {}
+
+      @Composable
+      fun Test(entries: List<String>) {
+        val first = entries.firstOrNull()
+        Pager { page ->
+          if (first != null) Text(text = first)
+        }
+      }
+      """,
+    )
+
+    val findings = createRule().lintWithContext(environment, code)
+
+    findings shouldHaveSize 1
+    findings.single().message shouldBe "Condition could be lifted out of \"Pager\""
+    findings.single().shouldStartAt(code, "if (first != null)")
+  }
+
+  should("report a condition on the it of a lambda enclosing the layout call") {
+    // language=kotlin
+    val code = composeSnippet(
+      """
+      data class Item(val selected: Boolean)
+
+      @Composable
+      fun Test(items: List<Item>, flags: List<Boolean>) {
+        items.forEach {
+          Row {
+            if (it.selected) Text(text = "row")
+          }
+        }
+        flags.forEach {
+          Column {
+            if (flags.any { flag -> it == flag }) Text(text = "column")
+          }
+        }
+      }
+      """,
+    )
+
+    val findings = createRule().lintWithContext(environment, code)
+
+    findings.map { it.message } shouldBe listOf(
+      "Condition could be lifted out of \"Row\"",
+      "Condition could be lifted out of \"Column\"",
+    )
+    findings[0].shouldStartAt(code, "if (it.selected)")
+    findings[1].shouldStartAt(code, "if (flags.any")
+  }
+
+  should("not report a condition on the implicit it of a content lambda with a receiver") {
+    // language=kotlin
+    val code = composeSnippet(
+      """
+      interface AnimatedContentScope
+
+      @Composable
+      fun <S> AnimatedContent(targetState: S, content: @Composable AnimatedContentScope.(S) -> Unit) {}
+
+      @Composable
+      fun Test(visible: Boolean) {
+        AnimatedContent(visible) {
+          if (it) Text(text = "shown")
+        }
+      }
+      """,
+    )
+
+    val findings = createRule().lintWithContext(environment, code)
+
+    findings.shouldBeEmpty()
+  }
+
+  should("report a condition whose own lambda uses it inside a content lambda with an implicit it") {
+    // language=kotlin
+    val code = composeSnippet(
+      """
+      @Composable fun Pager(content: @Composable (Int) -> Unit) {}
+
+      @Composable
+      fun Test(items: List<Int>) {
+        Pager {
+          if (items.any { it > 0 }) Text(text = "positive")
+        }
+      }
+      """,
+    )
+
+    val findings = createRule().lintWithContext(environment, code)
+
+    findings shouldHaveSize 1
+    findings.single().message shouldBe "Condition could be lifted out of \"Pager\""
+    findings.single().shouldStartAt(code, "if (items.any")
   }
 
   should("honour @Suppress on the function") {
