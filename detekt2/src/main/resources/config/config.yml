@@ -19,6 +19,7 @@ compose:
   TopLevelComposableFunctions:
     active: false
     allowInObjects: false
+    allowInInterfaces: false
   ComposableFunctionName:
     active: true
   ConditionCouldBeLifted:

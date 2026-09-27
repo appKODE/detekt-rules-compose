@@ -24,7 +24,7 @@ Here are some highlights of rules in this rule set:
 
 - `PublicComposablePreview` finds and reports composable previews which are not marked as `private`
 
-- `TopLevelComposableFunctions` ensures that all composable functions are top-level functions (disabled by default; `allowInObjects: true` also allows them inside `object`s)
+- `TopLevelComposableFunctions` ensures that all composable functions are top-level functions (disabled by default; `allowInObjects: true` also allows them inside `object`s, `allowInInterfaces: true` inside `interface`s)
 
 - `ComposableFunctionName` ensures that Composable functions which return Unit should start with upper-case while the ones that return a value should start with lower case
 
@@ -73,6 +73,7 @@ compose:
   TopLevelComposableFunctions:
     active: true
     allowInObjects: false
+    allowInInterfaces: false
   ComposableFunctionName:
     active: true
   ConditionCouldBeLifted:
