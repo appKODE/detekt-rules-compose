@@ -6,7 +6,9 @@
 
 * `ConditionCouldBeLifted`: a layout that also calls a composable outside the `if` through a qualified expression,
   like `slot?.invoke()`, `slot.invoke()` or `slot?.let { it() }`, is no longer reported, lifting the condition would
-  drop that call
+  drop that call. More generally, any statement other than a declaration that contains a composable call now blocks
+  the report, like `items.forEach { Text(it) }`, `repeat(n) { Text() }` or `when (x) { a -> Text() }`, so findings
+  can disappear and baseline entries for them become unused
 
 ## 2.1.0 - 2026-09-27
 
