@@ -480,6 +480,59 @@ class ConditionCouldBeLiftedTest : ShouldSpec({
     findings.first().message shouldContain "Column"
   }
 
+  should("not report when the layout also calls a composable slot outside the condition") {
+    val statements = listOf(
+      "trailing?.invoke()",
+      "icon.invoke()",
+      "icon()",
+      "trailing?.let { it() }",
+    )
+    val findingCounts = statements.flatMap { statement ->
+      val condition = "if (visible) Text(text = \"a\")"
+      listOf("$statement after" to "$condition\n$statement", "$statement before" to "$statement\n$condition")
+    }.associate { (case, body) ->
+      // language=kotlin
+      val code = composeSnippet(
+        """
+        @Composable
+        fun Test(
+          visible: Boolean,
+          icon: @Composable () -> Unit,
+          trailing: (@Composable () -> Unit)? = null,
+        ) {
+          Row {
+            $body
+          }
+        }
+        """,
+      )
+      case to createRule().lintWithContext(environment, code).size
+    }
+
+    findingCounts shouldBe findingCounts.mapValues { 0 }
+  }
+
+  should("report when then-branch only calls a nullable composable slot") {
+    // language=kotlin
+    val code = composeSnippet(
+      """
+      @Composable
+      fun Test(visible: Boolean, trailing: (@Composable () -> Unit)? = null) {
+        Row {
+          if (visible) {
+            trailing?.invoke()
+          }
+        }
+      }
+      """,
+    )
+
+    val findings = createRule().lintWithContext(environment, code)
+
+    findings shouldHaveSize 1
+    findings.first().message shouldContain "Row"
+  }
+
   should("not report when ignored 'modifier' argument is passed positionally") {
     // language=kotlin
     val code = composeSnippet(

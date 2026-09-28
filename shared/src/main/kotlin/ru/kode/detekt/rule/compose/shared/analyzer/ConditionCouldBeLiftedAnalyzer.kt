@@ -1,6 +1,7 @@
 package ru.kode.detekt.rule.compose.shared.analyzer
 
 import org.jetbrains.kotlin.psi.KtCallExpression
+import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtIfExpression
 import org.jetbrains.kotlin.psi.KtLambdaExpression
@@ -83,10 +84,12 @@ class ConditionCouldBeLiftedAnalyzer(
               return super.visitCallExpression(expression)
             }
 
-            val contentHasComposableCallChildren = contentComposableLambda.bodyExpression
-              ?.getChildrenOfType<KtCallExpression>()
-              .orEmpty()
-              .any { it.isComposableCall(options.composableAnnotationClassPackage, semantic) }
+            // `slot?.invoke()` or `slot?.let { it() }` is a qualified expression, not a call, so look inside statements
+            val contentHasComposableCallChildren = contentComposableLambda.bodyExpression?.statements.orEmpty()
+              .any {
+                it != conditionalExpression && it !is KtDeclaration &&
+                  it.hasComposableCallChildren(options.composableAnnotationClassPackage, semantic)
+              }
 
             if (!contentHasComposableCallChildren) {
               val conditionalHasComposableCallChildren = conditionalExpression.then
