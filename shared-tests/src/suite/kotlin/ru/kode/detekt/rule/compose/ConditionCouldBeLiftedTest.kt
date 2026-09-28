@@ -486,6 +486,9 @@ class ConditionCouldBeLiftedTest : ShouldSpec({
       "icon.invoke()",
       "icon()",
       "trailing?.let { it() }",
+      "items.forEach { Text(text = it) }",
+      "repeat(2) { Text(text = \"b\") }",
+      "when (x) { 1 -> Text(text = \"b\") }",
     )
     val findingCounts = statements.flatMap { statement ->
       val condition = "if (visible) Text(text = \"a\")"
@@ -499,6 +502,8 @@ class ConditionCouldBeLiftedTest : ShouldSpec({
           visible: Boolean,
           icon: @Composable () -> Unit,
           trailing: (@Composable () -> Unit)? = null,
+          items: List<String> = emptyList(),
+          x: Int = 0,
         ) {
           Row {
             $body
@@ -531,6 +536,30 @@ class ConditionCouldBeLiftedTest : ShouldSpec({
 
     findings shouldHaveSize 1
     findings.first().message shouldContain "Row"
+    findings.first().shouldStartAt(code, "if (visible)")
+  }
+
+  should("report when a declaration calling a composable is next to the condition") {
+    // language=kotlin
+    val code = composeSnippet(
+      """
+      @Composable fun <T> remember(calculation: () -> T): T = calculation()
+
+      @Composable
+      fun Test(visible: Boolean) {
+        Row {
+          val x = remember { 0 }
+          if (visible) Text(text = "a")
+        }
+      }
+      """,
+    )
+
+    val findings = createRule().lintWithContext(environment, code)
+
+    findings shouldHaveSize 1
+    findings.single().message shouldBe "Condition could be lifted out of \"Row\""
+    findings.single().shouldStartAt(code, "if (visible)")
   }
 
   should("not report when ignored 'modifier' argument is passed positionally") {

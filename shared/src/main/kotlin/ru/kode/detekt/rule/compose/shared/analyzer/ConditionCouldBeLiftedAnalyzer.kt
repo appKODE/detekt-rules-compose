@@ -9,6 +9,7 @@ import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.KtTreeVisitorVoid
 import org.jetbrains.kotlin.psi.KtValueArgumentName
+import org.jetbrains.kotlin.psi.psiUtil.anyDescendantOfType
 import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
 import org.jetbrains.kotlin.psi.psiUtil.getChildrenOfType
 import org.jetbrains.kotlin.psi.psiUtil.getReceiverExpression
@@ -152,7 +153,7 @@ private fun KtExpression.hasComposableCallChildren(
   composableAnnotationClassPackage: String,
   semantic: ComposeSemantic,
 ): Boolean {
-  return collectDescendantsOfType<KtCallExpression>().any {
+  return anyDescendantOfType<KtCallExpression> {
     it.isComposableCall(composableAnnotationClassPackage, semantic)
   }
 }
