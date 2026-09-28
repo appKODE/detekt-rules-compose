@@ -1,5 +1,13 @@
 # Changelog
 
+## 2.1.1 - Unreleased
+
+### Changes
+
+* `ConditionCouldBeLifted`: a layout that also calls a composable outside the `if` through a qualified expression,
+  like `slot?.invoke()`, `slot.invoke()` or `slot?.let { it() }`, is no longer reported, lifting the condition would
+  drop that call
+
 ## 2.1.0 - 2026-09-27
 
 ### Upgrading from 2.0.0
