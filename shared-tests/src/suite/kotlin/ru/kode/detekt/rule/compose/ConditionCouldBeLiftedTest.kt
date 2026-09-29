@@ -480,6 +480,88 @@ class ConditionCouldBeLiftedTest : ShouldSpec({
     findings.first().message shouldContain "Column"
   }
 
+  should("not report when the layout also calls a composable slot outside the condition") {
+    val statements = listOf(
+      "trailing?.invoke()",
+      "icon.invoke()",
+      "icon()",
+      "trailing?.let { it() }",
+      "items.forEach { Text(text = it) }",
+      "repeat(2) { Text(text = \"b\") }",
+      "when (x) { 1 -> Text(text = \"b\") }",
+    )
+    val findingCounts = statements.flatMap { statement ->
+      val condition = "if (visible) Text(text = \"a\")"
+      listOf("$statement after" to "$condition\n$statement", "$statement before" to "$statement\n$condition")
+    }.associate { (case, body) ->
+      // language=kotlin
+      val code = composeSnippet(
+        """
+        @Composable
+        fun Test(
+          visible: Boolean,
+          icon: @Composable () -> Unit,
+          trailing: (@Composable () -> Unit)? = null,
+          items: List<String> = emptyList(),
+          x: Int = 0,
+        ) {
+          Row {
+            $body
+          }
+        }
+        """,
+      )
+      case to createRule().lintWithContext(environment, code).size
+    }
+
+    findingCounts shouldBe findingCounts.mapValues { 0 }
+  }
+
+  should("report when then-branch only calls a nullable composable slot") {
+    // language=kotlin
+    val code = composeSnippet(
+      """
+      @Composable
+      fun Test(visible: Boolean, trailing: (@Composable () -> Unit)? = null) {
+        Row {
+          if (visible) {
+            trailing?.invoke()
+          }
+        }
+      }
+      """,
+    )
+
+    val findings = createRule().lintWithContext(environment, code)
+
+    findings shouldHaveSize 1
+    findings.first().message shouldContain "Row"
+    findings.first().shouldStartAt(code, "if (visible)")
+  }
+
+  should("report when a declaration calling a composable is next to the condition") {
+    // language=kotlin
+    val code = composeSnippet(
+      """
+      @Composable fun <T> remember(calculation: () -> T): T = calculation()
+
+      @Composable
+      fun Test(visible: Boolean) {
+        Row {
+          val x = remember { 0 }
+          if (visible) Text(text = "a")
+        }
+      }
+      """,
+    )
+
+    val findings = createRule().lintWithContext(environment, code)
+
+    findings shouldHaveSize 1
+    findings.single().message shouldBe "Condition could be lifted out of \"Row\""
+    findings.single().shouldStartAt(code, "if (visible)")
+  }
+
   should("not report when ignored 'modifier' argument is passed positionally") {
     // language=kotlin
     val code = composeSnippet(
