@@ -82,7 +82,7 @@ fun KtNamedFunction.returnsUnitLike(): Boolean? {
   val explicitType = typeReference
   if (explicitType != null) return explicitType.text == "Unit" || explicitType.text == "kotlin.Unit"
   if (hasBlockBody()) return true
-  // ponytail: `= Box {}` — an upper-case call body is usually a Unit composable (or a constructor); needs TR to decide
+  // `= Box {}` — an upper-case call body is usually a Unit composable (or a constructor); needs TR to decide
   val calleeName = (bodyExpression as? KtCallExpression)?.calleeExpression?.text
   return if (calleeName?.firstOrNull()?.isUpperCase() == true) null else false
 }
