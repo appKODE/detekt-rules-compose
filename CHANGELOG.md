@@ -1,5 +1,42 @@
 # Changelog
 
+## 2.1.2
+
+### Upgrading from 2.1.1
+
+No configuration change is needed, the two new options default to the 2.1.1 behaviour.
+`UnnecessaryEventHandlerParameter` reports fewer findings in some places and more in others (see below), so baseline
+entries can become unused and, with `maxIssues: 0`, a build that passed on 2.1.1 can fail on existing code.
+
+### Changes
+
+* `UnnecessaryEventHandlerParameter`: a call of a function which only shares its name with an event handler
+  parameter, like the extension `Modifier.onShown(...)` called inside a composable with an `onShown` parameter, is no
+  longer mistaken for a call of the handler. The reference is resolved with type resolution; without it, a call with
+  a receiver, with named arguments or with another number of arguments is not treated as a handler call (#46)
+* `UnnecessaryEventHandlerParameter`: a state argument is reported only when every call of the handler passes the
+  same expression at that position, as it already was for constants. A handler called as `onShown(id, position)` in
+  one place and `onShown(visible, 0)` in another is no longer reported, the parent can't supply these values
+  itself (#49). As a consequence:
+  * findings disappear when the calls disagree or when the handler is also passed on as a value
+    (`Child(onClick = onClick)`)
+  * several calls of one handler and several state arguments of one call now give one finding per handler instead of
+    one per call and per argument, its message lists all the parameters
+  * `onClick.invoke(data.id)` and `onClick?.invoke(data.id)` are now reported like `onClick(data.id)`
+  * a constant argument is now reported when the handler is checked for null before the call, as in
+    `if (onClick != null) onClick(1)`
+* `ComposableParametersOrdering`: overriding and `actual` functions are no longer reported, their order is dictated
+  by the overridden or `expect` declaration, which is still checked (#48)
+* `ComposableParametersOrdering`: new `allowTrailingEventHandlers` option (default `true`). With `false` a required
+  event handler (a non-composable lambda without a receiver which returns `Unit`) placed after optional parameters is
+  reported, as in `fun Item(id: String, modifier: Modifier = Modifier, onClick: () -> Unit)`. Lambdas with a
+  receiver, lambdas returning a value and parameters named in `trailingSlotNames` are not reported (#50)
+* `MissingModifierDefaultValue`: new `checkAbstractFunctions` option (default `false`). With `true` abstract and open
+  functions and functions of interfaces are checked too. Turn it on only if the project compiles with the K2
+  compiler and Kotlin language version 2.1 (abstract functions) or 2.2 (open functions), older setups reject default
+  values there. Overriding functions, `actual` functions and the function of a `fun interface` are never
+  reported (#47)
+
 ## 2.1.1 - 2026-09-29
 
 ### Changes
