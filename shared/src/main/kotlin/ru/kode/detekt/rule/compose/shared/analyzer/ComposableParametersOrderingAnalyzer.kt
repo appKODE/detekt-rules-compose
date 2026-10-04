@@ -5,6 +5,7 @@ import ru.kode.detekt.rule.compose.shared.ComposeDiagnostic
 import ru.kode.detekt.rule.compose.shared.hasAnnotationNamed
 import ru.kode.detekt.rule.compose.shared.isActualLike
 import ru.kode.detekt.rule.compose.shared.isComposableSlot
+import ru.kode.detekt.rule.compose.shared.isEventHandler
 import ru.kode.detekt.rule.compose.shared.isLambda
 import ru.kode.detekt.rule.compose.shared.isModifier
 import ru.kode.detekt.rule.compose.shared.isOverrideLike
@@ -19,6 +20,9 @@ import ru.kode.detekt.rule.compose.shared.isOverrideLike
  * Other composable slots are not forced to the end: a required slot can stay among the required parameters and an
  * optional one among the optional parameters. Trailing lambdas may follow the optional parameters, but only the last
  * parameter may be a required composable slot there.
+ *
+ * With [allowTrailingEventHandlers] turned off a required event handler (a non-composable lambda without a receiver
+ * returning `Unit`) is reported when it follows optional parameters, unless it is named in [trailingSlotNames].
  *
  * Overriding and `actual` functions are not checked: their order is dictated by the overridden or `expect` declaration.
  *
@@ -42,7 +46,10 @@ import ru.kode.detekt.rule.compose.shared.isOverrideLike
  * )
  * ```
  */
-class ComposableParametersOrderingAnalyzer(private val trailingSlotNames: List<String> = listOf("content")) {
+class ComposableParametersOrderingAnalyzer(
+  private val trailingSlotNames: List<String> = listOf("content"),
+  private val allowTrailingEventHandlers: Boolean = true,
+) {
   fun analyze(function: KtNamedFunction): List<ComposeDiagnostic> {
     if (!function.hasAnnotationNamed("Composable")) return emptyList()
     // the order is dictated by the overridden or the expect declaration
@@ -61,6 +68,22 @@ class ComposableParametersOrderingAnalyzer(private val trailingSlotNames: List<S
           node,
         ),
       )
+    }
+
+    if (!allowTrailingEventHandlers) {
+      val firstOptionalParameterIndex = function.valueParameters.indexOfFirst { it.hasDefaultValue() }
+      val misplacedEventHandler = function.valueParameters.withIndex().firstOrNull { (index, parameter) ->
+        firstOptionalParameterIndex in 0 until index && parameter.isEventHandler() &&
+          !parameter.hasDefaultValue() && parameter.name !in trailingSlotNames
+      }?.value
+      if (misplacedEventHandler != null) {
+        return listOf(
+          ComposeDiagnostic(
+            "Required event handler \"${misplacedEventHandler.name}\" should be placed before optional parameters",
+            misplacedEventHandler,
+          ),
+        )
+      }
     }
 
     val lastParameter = function.valueParameters.lastOrNull()
