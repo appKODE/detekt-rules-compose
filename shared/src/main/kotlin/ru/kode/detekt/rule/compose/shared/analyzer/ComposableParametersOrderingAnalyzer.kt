@@ -3,9 +3,12 @@ package ru.kode.detekt.rule.compose.shared.analyzer
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import ru.kode.detekt.rule.compose.shared.ComposeDiagnostic
 import ru.kode.detekt.rule.compose.shared.hasAnnotationNamed
+import ru.kode.detekt.rule.compose.shared.isActualLike
 import ru.kode.detekt.rule.compose.shared.isComposableSlot
+import ru.kode.detekt.rule.compose.shared.isEventHandler
 import ru.kode.detekt.rule.compose.shared.isLambda
 import ru.kode.detekt.rule.compose.shared.isModifier
+import ru.kode.detekt.rule.compose.shared.isOverrideLike
 
 /**
  * Checks that parameters of Composable functions have a correct order:
@@ -17,6 +20,12 @@ import ru.kode.detekt.rule.compose.shared.isModifier
  * Other composable slots are not forced to the end: a required slot can stay among the required parameters and an
  * optional one among the optional parameters. Trailing lambdas may follow the optional parameters, but only the last
  * parameter may be a required composable slot there.
+ *
+ * With [allowTrailingEventHandlers] turned off a required event handler (a non-composable lambda without a receiver
+ * returning `Unit`) is reported when it follows optional parameters, unless it is named in [trailingSlotNames].
+ * With [allowTrailingLambdas] turned off this applies to every required non-composable lambda, event handlers included.
+ *
+ * Overriding and `actual` functions are not checked: their order is dictated by the overridden or `expect` declaration.
  *
  * Non-compliant:
  *
@@ -38,9 +47,15 @@ import ru.kode.detekt.rule.compose.shared.isModifier
  * )
  * ```
  */
-class ComposableParametersOrderingAnalyzer(private val trailingSlotNames: List<String> = listOf("content")) {
+class ComposableParametersOrderingAnalyzer(
+  private val trailingSlotNames: List<String> = listOf("content"),
+  private val allowTrailingEventHandlers: Boolean = true,
+  private val allowTrailingLambdas: Boolean = true,
+) {
   fun analyze(function: KtNamedFunction): List<ComposeDiagnostic> {
     if (!function.hasAnnotationNamed("Composable")) return emptyList()
+    // the order is dictated by the overridden or the expect declaration
+    if (function.isOverrideLike() || function.isActualLike()) return emptyList()
 
     val valueParameters = function.valueParameters.dropLastWhile { it.isLambda() }
     val lastRequiredIndex = valueParameters.indexOfLast { !it.hasDefaultValue() }
@@ -55,6 +70,27 @@ class ComposableParametersOrderingAnalyzer(private val trailingSlotNames: List<S
           node,
         ),
       )
+    }
+
+    if (!allowTrailingEventHandlers || !allowTrailingLambdas) {
+      val firstOptionalParameterIndex = function.valueParameters.indexOfFirst { it.hasDefaultValue() }
+      val misplacedLambda = function.valueParameters.withIndex().firstOrNull { (index, parameter) ->
+        firstOptionalParameterIndex in 0 until index && !parameter.hasDefaultValue() &&
+          parameter.name !in trailingSlotNames &&
+          (
+            parameter.isEventHandler() ||
+              (!allowTrailingLambdas && parameter.isLambda() && !parameter.isComposableSlot())
+            )
+      }?.value
+      if (misplacedLambda != null) {
+        val kind = if (misplacedLambda.isEventHandler()) "event handler" else "lambda"
+        return listOf(
+          ComposeDiagnostic(
+            "Required $kind \"${misplacedLambda.name}\" should be placed before optional parameters",
+            misplacedLambda,
+          ),
+        )
+      }
     }
 
     val lastParameter = function.valueParameters.lastOrNull()

@@ -20,7 +20,7 @@ class NoTypeResolutionTest : ShouldSpec({
   )
 
   SharedRuleContracts.heavyParityCases.forEach { parityCase ->
-    should("refuse to lint without Analysis API: ${parityCase.ruleId}") {
+    should("refuse to lint without Analysis API: ${parityCase.name}") {
       val error = shouldThrow<IllegalArgumentException> {
         rules.getValue(parityCase.ruleId)().lint(composeSnippet(parityCase.code))
       }

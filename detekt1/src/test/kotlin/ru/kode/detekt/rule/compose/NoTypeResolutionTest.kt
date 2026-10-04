@@ -2,6 +2,7 @@ package ru.kode.detekt.rule.compose
 
 import io.gitlab.arturbosch.detekt.test.lint
 import io.kotest.core.spec.style.ShouldSpec
+import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
 import ru.kode.detekt.rule.compose.contract.SharedRuleContracts
 import ru.kode.detekt.rule.compose.snippet.composeSnippet
@@ -18,18 +19,63 @@ class NoTypeResolutionTest : ShouldSpec({
     "ReusedModifierInstance" to { ReusedModifierInstance(modifierClassPackage = TEST_COMPOSE_PACKAGE) },
     "UnnecessaryEventHandlerParameter" to { UnnecessaryEventHandlerParameter() },
   )
-  // UnnecessaryEventHandlerParameter only uses resolution to skip sealed receivers, so it keeps reporting
-  val expectedFindings = mapOf(
-    "ConditionCouldBeLifted" to 0,
-    "ReusedModifierInstance" to 0,
-    "UnnecessaryEventHandlerParameter" to 1,
-  )
 
   SharedRuleContracts.heavyParityCases.forEach { parityCase ->
-    should("not crash without type resolution: ${parityCase.ruleId}") {
+    should("not crash without type resolution: ${parityCase.name}") {
       val findings = rules.getValue(parityCase.ruleId)().lint(composeSnippet(parityCase.code))
 
-      findings shouldHaveSize expectedFindings.getValue(parityCase.ruleId)
+      findings shouldHaveSize parityCase.expectedUnresolvedFindings
     }
+  }
+
+  should("tell an event handler call from a same-named function call by its arguments") {
+    // language=kotlin
+    val code = composeSnippet(
+      """
+        data class Data(val id: Int)
+        fun onClick(id: Int, label: String) {}
+
+        @Composable
+        fun Test(data: Data, onClick: (Int) -> Unit) {
+          Button(onClick = { onClick(id = data.id, label = "x") }) {}
+        }
+      """.trimIndent(),
+    )
+
+    UnnecessaryEventHandlerParameter().lint(code).shouldBeEmpty()
+  }
+
+  should("not take a same-named function call with another number of arguments for an event handler call") {
+    // language=kotlin
+    val code = composeSnippet(
+      """
+        data class Data(val id: Int)
+        fun onClick(id: Int, position: Int) {}
+
+        @Composable
+        fun Test(data: Data, onClick: (Int) -> Unit) {
+          Button(onClick = { onClick(data.id, 0) }) {}
+        }
+      """.trimIndent(),
+    )
+
+    UnnecessaryEventHandlerParameter().lint(code).shouldBeEmpty()
+  }
+
+  should("not take a same-named function call with a named argument for an event handler call") {
+    // language=kotlin
+    val code = composeSnippet(
+      """
+        data class Data(val id: Int)
+        fun onClick(id: Int) {}
+
+        @Composable
+        fun Test(data: Data, onClick: (Int) -> Unit) {
+          Button(onClick = { onClick(id = data.id) }) {}
+        }
+      """.trimIndent(),
+    )
+
+    UnnecessaryEventHandlerParameter().lint(code).shouldBeEmpty()
   }
 })

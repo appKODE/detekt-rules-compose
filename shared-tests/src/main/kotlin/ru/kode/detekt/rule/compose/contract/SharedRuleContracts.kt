@@ -12,6 +12,9 @@ data class HeavyRuleParityCase(
   val ruleId: String,
   val code: String,
   val expectedMessages: List<String>,
+  /** Findings when nothing resolves: unresolved symbols, or detekt1 without type resolution. */
+  val expectedUnresolvedFindings: Int = 0,
+  val name: String = ruleId,
 )
 
 object SharedRuleContracts {
@@ -231,6 +234,22 @@ object SharedRuleContracts {
         "Unnecessary event callback arguments. Move all \"data\" access to the parent composable " +
           "event handler and switch \"onClick\" type to \"() -> Unit\"",
       ),
+      // resolution is only used to tell the handler from its namesakes and to skip sealed receivers
+      expectedUnresolvedFindings = 1,
+    ),
+    // https://github.com/appKODE/detekt-rules-compose/issues/46
+    HeavyRuleParityCase(
+      ruleId = "UnnecessaryEventHandlerParameter",
+      name = "UnnecessaryEventHandlerParameter, function named like its event handler",
+      code =
+      """
+        @Composable
+        fun Modifier.onShown(percent: Float, onShown: () -> Unit): Modifier = onShown(0, percent, onShown)
+
+        @Composable
+        fun Modifier.onShown(extraKeys: Int, percent: Float, onShown: () -> Unit): Modifier = this
+      """.trimIndent(),
+      expectedMessages = emptyList(),
     ),
   )
 }

@@ -3,6 +3,7 @@ package ru.kode.detekt.rule.compose
 import dev.detekt.test.TestConfig
 import dev.detekt.test.lint
 import io.kotest.core.spec.style.ShouldSpec
+import io.kotest.datatest.withData
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
@@ -676,6 +677,356 @@ class ComposableParametersOrderingTest : ShouldSpec() {
       }
     }
 
+    context("trailing event handlers") {
+      val disallowed = TestConfig("allowTrailingEventHandlers" to false)
+
+      should("not report a required trailing event handler by default (#50)") {
+        // language=kotlin
+        val code = """
+        @Composable
+        fun Test(
+          id: String,
+          modifier: Modifier = Modifier,
+          onClick: () -> Unit,
+        ) {
+        }
+        """.trimIndent()
+
+        val findings = ComposableParametersOrdering().lint(code)
+
+        findings.shouldBeEmpty()
+      }
+
+      context("report a required event handler after optional parameters when disallowed") {
+        withData(
+          nameFn = { it.first },
+          Triple(
+            "the issue snippet",
+            // language=kotlin
+            """
+            @Composable
+            fun Test(
+              id: String,
+              modifier: Modifier = Modifier,
+              onClick: () -> Unit,
+            ) {
+            }
+            """.trimIndent(),
+            "onClick",
+          ),
+          Triple(
+            "a handler after an optional non-modifier parameter",
+            // language=kotlin
+            """
+            @Composable
+            fun Test(
+              enabled: Boolean = false,
+              onBack: () -> Unit,
+            ) {
+            }
+            """.trimIndent(),
+            "onBack",
+          ),
+          Triple(
+            "a handler before a trailing slot",
+            // language=kotlin
+            """
+            @Composable
+            fun Test(
+              modifier: Modifier = Modifier,
+              onClick: () -> Unit,
+              content: @Composable () -> Unit,
+            ) {
+            }
+            """.trimIndent(),
+            "onClick",
+          ),
+          Triple(
+            "a suspend handler",
+            // language=kotlin
+            """
+            @Composable
+            fun Test(
+              modifier: Modifier = Modifier,
+              onRefresh: suspend () -> Unit,
+            ) {
+            }
+            """.trimIndent(),
+            "onRefresh",
+          ),
+        ) { (_, code, handler) ->
+          val findings = ComposableParametersOrdering(disallowed).lint(code)
+
+          findings shouldHaveSize 1
+          findings.single().message shouldBe
+            "Required event handler \"$handler\" should be placed before optional parameters"
+          findings.single().shouldStartAt(code, "$handler:")
+        }
+      }
+
+      context("not report when disallowed") {
+        withData(
+          nameFn = { it.first },
+          Pair(
+            "an optional nullable handler before a trailing slot",
+            // language=kotlin
+            """
+            @Composable
+            fun Test(
+              modifier: Modifier = Modifier,
+              onClick: (() -> Unit)? = null,
+              content: @Composable () -> Unit,
+            ) {
+            }
+            """.trimIndent(),
+          ),
+          Pair(
+            "a trailing handler with a default value",
+            // language=kotlin
+            """
+            @Composable
+            fun Test(
+              modifier: Modifier = Modifier,
+              onClick: () -> Unit = {},
+            ) {
+            }
+            """.trimIndent(),
+          ),
+          Pair(
+            "a handler among required parameters",
+            // language=kotlin
+            """
+            @Composable
+            fun Test(
+              id: String,
+              onClick: () -> Unit,
+              modifier: Modifier = Modifier,
+            ) {
+            }
+            """.trimIndent(),
+          ),
+          Pair(
+            "a trailing lambda with a receiver named as a trailing slot",
+            // language=kotlin
+            """
+            @Composable
+            fun Test(
+              modifier: Modifier = Modifier,
+              content: LazyListScope.() -> Unit,
+            ) {
+            }
+            """.trimIndent(),
+          ),
+          Pair(
+            "a handler-shaped trailing slot",
+            // language=kotlin
+            """
+            @Composable
+            fun Test(
+              modifier: Modifier = Modifier,
+              content: () -> Unit,
+            ) {
+            }
+            """.trimIndent(),
+          ),
+          Pair(
+            "a trailing lambda returning a value",
+            // language=kotlin
+            """
+            @Composable
+            fun Test(
+              modifier: Modifier = Modifier,
+              key: (Int) -> Any,
+            ) {
+            }
+            """.trimIndent(),
+          ),
+          Pair(
+            "a trailing lambda with a receiver",
+            // language=kotlin
+            """
+            @Composable
+            fun Test(
+              modifier: Modifier = Modifier,
+              onDraw: DrawScope.() -> Unit,
+            ) {
+            }
+            """.trimIndent(),
+          ),
+          Pair(
+            "a trailing handler when there are no optional parameters",
+            // language=kotlin
+            """
+            @Composable
+            fun Test(
+              id: String,
+              modifier: Modifier,
+              onClick: () -> Unit,
+            ) {
+            }
+            """.trimIndent(),
+          ),
+        ) { (_, code) ->
+          ComposableParametersOrdering(disallowed).lint(code).shouldBeEmpty()
+        }
+      }
+    }
+
+    context("trailing lambdas") {
+      val disallowed = TestConfig("allowTrailingLambdas" to false)
+
+      should("not report a required trailing lambda by default, also when event handlers are disallowed") {
+        // language=kotlin
+        val code = """
+        @Composable
+        fun Test(
+          value: String,
+          modifier: Modifier = Modifier,
+          validator: (String) -> Boolean,
+        ) {
+        }
+        """.trimIndent()
+
+        ComposableParametersOrdering().lint(code).shouldBeEmpty()
+        ComposableParametersOrdering(TestConfig("allowTrailingEventHandlers" to false)).lint(code).shouldBeEmpty()
+      }
+
+      context("report a required lambda after optional parameters when disallowed") {
+        withData(
+          nameFn = { it.first },
+          Triple(
+            "a lambda returning a value",
+            // language=kotlin
+            """
+            @Composable
+            fun Test(
+              value: String,
+              modifier: Modifier = Modifier,
+              validator: (String) -> Boolean,
+            ) {
+            }
+            """.trimIndent(),
+            "lambda" to "validator",
+          ),
+          Triple(
+            "a lambda with a receiver",
+            // language=kotlin
+            """
+            @Composable
+            fun Test(
+              modifier: Modifier = Modifier,
+              onDraw: DrawScope.() -> Unit,
+            ) {
+            }
+            """.trimIndent(),
+            "lambda" to "onDraw",
+          ),
+          Triple(
+            "a lambda before a trailing slot",
+            // language=kotlin
+            """
+            @Composable
+            fun Test(
+              modifier: Modifier = Modifier,
+              key: (Int) -> Any,
+              content: @Composable () -> Unit,
+            ) {
+            }
+            """.trimIndent(),
+            "lambda" to "key",
+          ),
+          Triple(
+            "an event handler",
+            // language=kotlin
+            """
+            @Composable
+            fun Test(
+              modifier: Modifier = Modifier,
+              onClick: () -> Unit,
+            ) {
+            }
+            """.trimIndent(),
+            "event handler" to "onClick",
+          ),
+        ) { (_, code, expected) ->
+          val (kind, name) = expected
+          val findings = ComposableParametersOrdering(disallowed).lint(code)
+
+          findings shouldHaveSize 1
+          findings.single().message shouldBe "Required $kind \"$name\" should be placed before optional parameters"
+          findings.single().shouldStartAt(code, "$name:")
+        }
+      }
+
+      context("not report when disallowed") {
+        withData(
+          nameFn = { it.first },
+          Pair(
+            "a lambda named as a trailing slot",
+            // language=kotlin
+            """
+            @Composable
+            fun Test(
+              modifier: Modifier = Modifier,
+              content: LazyListScope.() -> Unit,
+            ) {
+            }
+            """.trimIndent(),
+          ),
+          Pair(
+            "a trailing composable slot",
+            // language=kotlin
+            """
+            @Composable
+            fun Test(
+              modifier: Modifier = Modifier,
+              label: @Composable () -> Unit,
+            ) {
+            }
+            """.trimIndent(),
+          ),
+          Pair(
+            "a trailing lambda with a default value",
+            // language=kotlin
+            """
+            @Composable
+            fun Test(
+              modifier: Modifier = Modifier,
+              validator: (String) -> Boolean = { true },
+            ) {
+            }
+            """.trimIndent(),
+          ),
+          Pair(
+            "a lambda among required parameters",
+            // language=kotlin
+            """
+            @Composable
+            fun Test(
+              validator: (String) -> Boolean,
+              modifier: Modifier = Modifier,
+            ) {
+            }
+            """.trimIndent(),
+          ),
+          Pair(
+            "a trailing lambda when there are no optional parameters",
+            // language=kotlin
+            """
+            @Composable
+            fun Test(
+              value: String,
+              validator: (String) -> Boolean,
+            ) {
+            }
+            """.trimIndent(),
+          ),
+        ) { (_, code) ->
+          ComposableParametersOrdering(disallowed).lint(code).shouldBeEmpty()
+        }
+      }
+    }
+
     context("other functions") {
       should("ignore non-composable functions") {
         // language=kotlin
@@ -687,6 +1038,89 @@ class ComposableParametersOrderingTest : ShouldSpec() {
         val findings = ComposableParametersOrdering().lint(code)
 
         findings.shouldBeEmpty()
+      }
+
+      should("not report an overriding function, its order is set by the overridden one (#48)") {
+        // language=kotlin
+        val code = """
+        class ScreenImpl : Screen {
+          @Composable
+          override fun Content(title: String, modifier: Modifier, enabled: Boolean) {
+          }
+        }
+        """.trimIndent()
+
+        val findings = ComposableParametersOrdering().lint(code)
+
+        findings.shouldBeEmpty()
+      }
+
+      should("not report an overriding function of an anonymous object (#48)") {
+        // language=kotlin
+        val code = """
+        val screen = object : Screen {
+          @Composable
+          override fun Content(title: String, modifier: Modifier, enabled: Boolean) {
+          }
+        }
+        """.trimIndent()
+
+        val findings = ComposableParametersOrdering().lint(code)
+
+        findings.shouldBeEmpty()
+      }
+
+      should("not report an actual function, its order is set by the expect one") {
+        // language=kotlin
+        val code = """
+        @Composable
+        actual fun Foo(text: String, modifier: Modifier, enabled: Boolean) {
+        }
+        """.trimIndent()
+
+        val findings = ComposableParametersOrdering().lint(code)
+
+        findings.shouldBeEmpty()
+      }
+
+      should("report an expect function") {
+        // language=kotlin
+        val code = """
+        @Composable
+        expect fun Foo(text: String, modifier: Modifier, enabled: Boolean)
+        """.trimIndent()
+
+        val findings = ComposableParametersOrdering().lint(code)
+
+        findings shouldHaveSize 1
+      }
+
+      should("report an interface function") {
+        // language=kotlin
+        val code = """
+        interface Screen {
+          @Composable
+          fun Content(title: String, modifier: Modifier, enabled: Boolean)
+        }
+        """.trimIndent()
+
+        val findings = ComposableParametersOrdering().lint(code)
+
+        findings shouldHaveSize 1
+      }
+
+      should("report an abstract function") {
+        // language=kotlin
+        val code = """
+        abstract class Screen {
+          @Composable
+          abstract fun Content(title: String, modifier: Modifier, enabled: Boolean)
+        }
+        """.trimIndent()
+
+        val findings = ComposableParametersOrdering().lint(code)
+
+        findings shouldHaveSize 1
       }
     }
   }

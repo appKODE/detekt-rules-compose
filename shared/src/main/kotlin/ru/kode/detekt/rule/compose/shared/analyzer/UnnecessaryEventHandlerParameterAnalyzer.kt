@@ -1,5 +1,7 @@
 package ru.kode.detekt.rule.compose.shared.analyzer
 
+import org.jetbrains.kotlin.lexer.KtTokens
+import org.jetbrains.kotlin.psi.KtBinaryExpression
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtConstantExpression
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
@@ -57,12 +59,15 @@ import ru.kode.detekt.rule.compose.shared.isEventHandler
  * }
  * ```
  *
+ * A state parameter argument is reported when every call of the event handler (`onClick(...)` or
+ * `onClick.invoke(...)`) passes the same expression at that position and the handler is used nowhere else (not
+ * passed on as a value, a comparison with `null` aside): otherwise the argument tells the calls apart or the handler
+ * type is dictated by its other user. All such arguments of a handler are reported in one finding.
+ *
  * A constant argument (a literal, a string without templates, a Kotlin `const val`, an enum entry or an object) is
- * reported the same way when every call of the event handler (`onClose(...)` or `onClose?.invoke(...)`) passes the
- * same constant at that position and the handler is used nowhere else (not passed on as a value): the parent already
- * knows it, so `onClose(Intent.Close)` should become `onClose()`. All such arguments of a handler are reported in one
- * finding. Different constants (`onCheckedChange(true)` and `onCheckedChange(false)`) are not reported.
- * Disabled with [reportConstantArguments].
+ * reported under the same conditions, in a finding of its own: the parent already knows it, so
+ * `onClose(Intent.Close)` should become `onClose()`. Different constants (`onCheckedChange(true)` and
+ * `onCheckedChange(false)`) are not reported. Disabled with [reportConstantArguments].
  */
 class UnnecessaryEventHandlerParameterAnalyzer(
   private val semantic: ComposeSemantic,
@@ -71,79 +76,104 @@ class UnnecessaryEventHandlerParameterAnalyzer(
   fun analyze(function: KtNamedFunction): List<ComposeDiagnostic> {
     if (!function.hasAnnotationNamed("Composable")) return emptyList()
 
-    val stateParameters = function.valueParameters.filter { !it.isEventHandler() }
-    val eventParameters = function.valueParameters.filter { it.isEventHandler() }
-    val stateParameterNames = stateParameters.mapNotNull { it.name }.toSet()
-    val diagnostics = mutableListOf<ComposeDiagnostic>()
+    val (eventParameters, stateParameters) = function.valueParameters.partition { it.isEventHandler() }
     val eventCalls = mutableMapOf<KtParameter, MutableList<KtCallExpression>>()
     val eventsUsedOtherwise = mutableSetOf<KtParameter>()
 
     function.bodyExpression?.accept(
       object : KtTreeVisitorVoid() {
-        override fun visitCallExpression(expression: KtCallExpression) {
-          super.visitCallExpression(expression)
-
-          val eventParameterForCall = eventParameters.find { it.name == expression.calleeExpression?.text }
-            ?: return
-
-          expression.valueArguments.forEachIndexed { index, argument ->
-            val argumentExpression = argument.getArgumentExpression()
-            val argumentReceiverName = when (argumentExpression) {
-              is KtDotQualifiedExpression -> argumentExpression.receiverNameUnlessSealed()
-              is KtNameReferenceExpression -> argumentExpression.getReferencedName()
-              else -> null
-            }
-
-            if (argumentReceiverName != null &&
-              argumentReceiverName in stateParameterNames &&
-              !argument.isDeclaredBetween(argumentReceiverName, function)
-            ) {
-              diagnostics +=
-                buildDiagnostic(eventParameterForCall, "all \"$argumentReceiverName\" access", setOf(index))
-            }
-          }
-        }
-
         override fun visitReferenceExpression(expression: KtReferenceExpression) {
           super.visitReferenceExpression(expression)
-          if (expression !is KtNameReferenceExpression) return
-          val name = expression.getReferencedName()
-          val eventParameter = eventParameters.find { it.name == name } ?: return
-          if (expression.parent is KtValueArgumentName || expression.getReceiverExpression() != null) return
-          if (expression.isDeclaredBetween(name, function)) return
+          if (expression !is KtNameReferenceExpression || expression.parent is KtValueArgumentName) return
+          val eventParameter = eventParameters.find { it.name == expression.getReferencedName() } ?: return
+          val call = expression.calledAsFunction()
+          val targetsEventParameter = semantic.referenceTargetsParameter(expression, eventParameter)
+            ?: expression.looksLikeReferenceTo(eventParameter, call, function)
+          if (!targetsEventParameter) return
 
-          val call = when (val parent = expression.parent) {
-            is KtCallExpression -> parent.takeIf { it.calleeExpression == expression }
-
-            is KtQualifiedExpression -> (parent.selectorExpression as? KtCallExpression)
-              ?.takeIf { parent.receiverExpression == expression && it.calleeExpression?.text == "invoke" }
-
-            else -> null
-          }
-          if (call != null) {
-            eventCalls.getOrPut(eventParameter) { mutableListOf() } += call
-          } else {
-            eventsUsedOtherwise += eventParameter
-          }
-        }
-
-        private fun KtDotQualifiedExpression.receiverNameUnlessSealed(): String? {
-          if (lastChild is KtCallExpression) return null
-          return if (semantic.receiverHasSealedTypeOrSupertype(receiverExpression)) {
-            null
-          } else {
-            text.takeWhile { it != '.' }
+          when {
+            call != null -> eventCalls.getOrPut(eventParameter) { mutableListOf() } += call
+            !expression.isComparedWithNull() -> eventsUsedOtherwise += eventParameter
           }
         }
       },
     )
 
-    if (reportConstantArguments) {
-      eventCalls.filterKeys { it !in eventsUsedOtherwise }.forEach { (eventParameter, calls) ->
-        constantArgumentDiagnostic(eventParameter, calls)?.let { diagnostics += it }
-      }
+    return eventCalls.filterKeys { it !in eventsUsedOtherwise }.flatMap { (eventParameter, calls) ->
+      listOfNotNull(
+        stateArgumentDiagnostic(eventParameter, calls, stateParameters, function),
+        if (reportConstantArguments) constantArgumentDiagnostic(eventParameter, calls) else null,
+      )
     }
-    return diagnostics
+  }
+
+  /** The `handler(...)` or `handler.invoke(...)` call this reference is the function of. */
+  private fun KtNameReferenceExpression.calledAsFunction(): KtCallExpression? = when (val parent = parent) {
+    is KtCallExpression -> parent.takeIf { it.calleeExpression == this }
+
+    is KtQualifiedExpression -> (parent.selectorExpression as? KtCallExpression)
+      ?.takeIf { parent.receiverExpression == this && it.calleeExpression?.text == "invoke" }
+
+    else -> null
+  }
+
+  /**
+   * Name-based stand-in for [ComposeSemantic.referenceTargetsParameter] when the reference can't be resolved. A
+   * `handler(...)` call has to match the function type of [eventParameter] to be told from a same-named function.
+   */
+  private fun KtNameReferenceExpression.looksLikeReferenceTo(
+    eventParameter: KtParameter,
+    call: KtCallExpression?,
+    function: KtNamedFunction,
+  ): Boolean {
+    if (getReceiverExpression() != null || isDeclaredBetween(getReferencedName(), function)) return false
+    if (call == null || call.calleeExpression != this) return true
+    return call.valueArguments.size == eventParameter.functionTypeOrNull()?.parameters?.size &&
+      call.valueArguments.none { it.isNamed() || it.isSpread }
+  }
+
+  /** Name of the state parameter this argument is or reads a property of. */
+  private fun KtExpression.stateParameterName(stateParameters: List<KtParameter>, function: KtNamedFunction): String? {
+    val root = when (this) {
+      is KtNameReferenceExpression -> this
+      is KtDotQualifiedExpression -> rootReferenceUnlessSealed()
+      else -> null
+    } ?: return null
+    val name = root.getReferencedName()
+    val stateParameter = stateParameters.find { it.name == name } ?: return null
+    val targetsStateParameter = semantic.referenceTargetsParameter(root, stateParameter)
+      ?: !root.isDeclaredBetween(name, function)
+    return name.takeIf { targetsStateParameter }
+  }
+
+  private fun KtDotQualifiedExpression.rootReferenceUnlessSealed(): KtNameReferenceExpression? {
+    if (selectorExpression is KtCallExpression || semantic.receiverHasSealedTypeOrSupertype(receiverExpression)) {
+      return null
+    }
+    return generateSequence(receiverExpression) { (it as? KtDotQualifiedExpression)?.receiverExpression }
+      .last() as? KtNameReferenceExpression
+  }
+
+  private fun KtExpression.isComparedWithNull(): Boolean {
+    val comparison = parent as? KtBinaryExpression ?: return false
+    return (comparison.operationToken == KtTokens.EQEQ || comparison.operationToken == KtTokens.EXCLEQ) &&
+      listOfNotNull(comparison.left, comparison.right).any(KtPsiUtil::isNullConstant)
+  }
+
+  /** One finding for all argument indexes which every call of [eventParameter] passes the same state at. */
+  private fun stateArgumentDiagnostic(
+    eventParameter: KtParameter,
+    calls: List<KtCallExpression>,
+    stateParameters: List<KtParameter>,
+    function: KtNamedFunction,
+  ): ComposeDiagnostic? {
+    val stateParameterNames = argumentsOfEveryCall(calls) { it.stateParameterName(stateParameters, function) }
+    if (stateParameterNames.isEmpty()) return null
+    return buildDiagnostic(
+      eventParameter,
+      "all ${stateParameterNames.values.distinct().joinToString { "\"$it\"" }} access",
+      stateParameterNames.keys,
+    )
   }
 
   /** One finding for all argument indexes which every call of [eventParameter] passes the same constant at. */
@@ -151,25 +181,33 @@ class UnnecessaryEventHandlerParameterAnalyzer(
     eventParameter: KtParameter,
     calls: List<KtCallExpression>,
   ): ComposeDiagnostic? {
-    val constants = (0 until calls.minOf { it.valueArguments.size }).mapNotNull { index ->
-      val constant = calls.map { call ->
-        call.valueArguments[index].getArgumentExpression()
-          ?.let(KtPsiUtil::safeDeparenthesize)
-          ?.takeIf { it.isConstant() }
-          ?.text
-          ?: return@mapNotNull null
-      }.distinct().singleOrNull() ?: return@mapNotNull null
-      index to constant
-    }.toMap()
+    val constants = argumentsOfEveryCall(calls) { argument -> argument.text.takeIf { argument.isConstant() } }
     if (constants.isEmpty()) return null
     val movedArgument = if (constants.size == 1) "constant" else "constants"
     return buildDiagnostic(
       eventParameter,
-      "$movedArgument ${constants.values.joinToString {
-        "\"$it\""
-      }}",
+      "$movedArgument ${constants.values.joinToString { "\"$it\"" }}",
       constants.keys,
     )
+  }
+
+  /**
+   * Argument indexes at which every call passes the same expression and [describe] accepts it in every call, with
+   * the description of that expression.
+   */
+  private fun argumentsOfEveryCall(
+    calls: List<KtCallExpression>,
+    describe: (KtExpression) -> String?,
+  ): Map<Int, String> {
+    return (0 until calls.minOf { it.valueArguments.size }).mapNotNull { index ->
+      val arguments = calls.map { call ->
+        call.valueArguments[index].getArgumentExpression()?.let(KtPsiUtil::safeDeparenthesize)
+          ?: return@mapNotNull null
+      }
+      if (arguments.distinctBy { it.text }.size > 1) return@mapNotNull null
+      val descriptions = arguments.map { describe(it) ?: return@mapNotNull null }
+      index to descriptions.first()
+    }.toMap()
   }
 
   private fun KtExpression.isConstant(): Boolean = when (this) {

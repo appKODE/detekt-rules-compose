@@ -630,4 +630,314 @@ class UnnecessaryEventHandlerParameterTest : ShouldSpec({
     UnnecessaryEventHandlerParameter(TestConfig("reportConstantArguments" to true))
       .lintWithContext(environment, code) shouldHaveSize 2
   }
+
+  // https://github.com/appKODE/detekt-rules-compose/issues/46
+  context("not report a call of something else named like the event handler") {
+    withData(
+      nameFn = { it.first },
+      "overload of the function taking the handler" to """
+        @Composable
+        fun Modifier.onShown(percent: Float, onShown: () -> Unit): Modifier = onShown(0, percent, onShown)
+
+        @Composable
+        fun Modifier.onShown(extraKeys: Int, percent: Float, onShown: () -> Unit): Modifier = this
+      """,
+      "overload of the function not taking the handler" to """
+        @Composable
+        fun Modifier.onShown(percent: Float, onShown: () -> Unit): Modifier = onShown(0, percent)
+
+        @Composable
+        fun Modifier.onShown(extraKeys: Int, percent: Float): Modifier = this
+      """,
+      "overload called on an explicit receiver" to """
+        @Composable
+        fun Modifier.onShown(percent: Float, onShown: () -> Unit): Modifier = this.onShown(0, percent, onShown)
+
+        @Composable
+        fun Modifier.onShown(extraKeys: Int, percent: Float, onShown: () -> Unit): Modifier = this
+      """,
+      "member of a state parameter" to """
+        class Data(val id: Int) { fun onClick(id: Int) {} }
+
+        @Composable
+        fun Test(data: Data, onClick: (Int) -> Unit) {
+          Button(onClick = { data.onClick(data.id) }) { }
+        }
+      """,
+      "function chosen by the argument type" to """
+        fun onSelect(key: String) {}
+
+        @Composable
+        fun Test(key: String, onSelect: (Int) -> Unit) {
+          Button(onClick = { onSelect(key) }) { }
+        }
+      """,
+      "function called with named arguments" to """
+        data class Data(val id: Int)
+        fun onClick(id: Int, label: String) {}
+
+        @Composable
+        fun Test(data: Data, onClick: (Int) -> Unit) {
+          Button(onClick = { onClick(id = data.id, label = "x") }) { }
+        }
+      """,
+      "lambda parameter" to """
+        data class Data(val id: Int)
+        @Composable fun Wrapper(content: @Composable ((Int) -> Unit) -> Unit) {}
+
+        @Composable
+        fun Test(data: Data, onClick: (Int) -> Unit) {
+          Wrapper { onClick -> Button(onClick = { onClick(data.id) }) { } }
+        }
+      """,
+      "local function" to """
+        data class Data(val id: Int)
+
+        @Composable
+        fun Test(data: Data, onClick: (Int) -> Unit) {
+          fun onClick(id: Int) {}
+          Button(onClick = { onClick(data.id) }) { }
+        }
+      """,
+      "parameter of a nested composable" to """
+        data class Data(val id: Int)
+
+        @Composable
+        fun Test(data: Data, onClick: (Int) -> Unit) {
+          @Composable
+          fun Inner(onClick: (Int) -> Unit) {
+            Button(onClick = { onClick(data.id) }) { }
+          }
+        }
+      """,
+      "delegated local property derived from the handler" to """
+        data class Data(val id: Int)
+        class State<T>(val value: T)
+        operator fun <T> State<T>.getValue(thisRef: Any?, property: kotlin.reflect.KProperty<*>): T = value
+        fun <T> rememberUpdatedState(value: T): State<T> = State(value)
+
+        @Composable
+        fun Test(data: Data, onClick: (Int) -> Unit) {
+          val onClick by rememberUpdatedState(onClick)
+          Button(onClick = { onClick(data.id) }) { }
+        }
+      """,
+    ) { (_, snippet) ->
+      val code = composeSnippet(snippet.trimIndent())
+
+      val findings = UnnecessaryEventHandlerParameter().lintWithContext(environment, code)
+
+      findings.shouldBeEmpty()
+    }
+  }
+
+  should("report an event handler called with a trailing lambda") {
+    // language=kotlin
+    val code = composeSnippet(
+      """
+        @Composable
+        fun Test(item: String, onDone: (String, () -> Unit) -> Unit) {
+          Button(onClick = { onDone(item) { } }) { }
+        }
+      """.trimIndent(),
+    )
+
+    val findings = UnnecessaryEventHandlerParameter().lintWithContext(environment, code)
+
+    findings.single().message shouldBe "Unnecessary event callback arguments. Move all \"item\" access " +
+      "to the parent composable event handler and switch \"onDone\" type to \"(() -> Unit) -> Unit\""
+  }
+
+  // https://github.com/appKODE/detekt-rules-compose/issues/49
+  context("not report a state parameter which is not passed by every call or when the handler is used otherwise") {
+    withData(
+      nameFn = { it.first },
+      "also called with lambda parameters" to """
+        @Composable fun Foo(onVisibleItemToTrack: (Boolean, Int) -> Unit) {}
+        @Composable fun Bar(onShown: () -> Unit) {}
+
+        @Composable
+        fun Test(bool: Boolean, onShown: (Boolean, Int) -> Unit) {
+          when (bool) {
+            true -> Foo(onVisibleItemToTrack = { id: Boolean, position: Int -> onShown(id, position) })
+            false -> Bar(onShown = { onShown(bool, 0) })
+          }
+        }
+      """,
+      "called with different state parameters" to """
+        data class Data(val id: Int)
+
+        @Composable
+        fun Test(a: Data, b: Data, onClick: (Int) -> Unit) {
+          Button(onClick = { onClick(a.id) }) { }
+          Button(onClick = { onClick(b.id) }) { }
+        }
+      """,
+      "called with different properties of a state parameter" to """
+        data class Data(val id: String, val title: String)
+
+        @Composable
+        fun Test(data: Data, onClick: (String) -> Unit) {
+          Button(onClick = { onClick(data.id) }) { }
+          Button(onClick = { onClick(data.title) }) { }
+        }
+      """,
+      "also called with a constant" to """
+        @Composable
+        fun Tabs(selected: Int, onSelect: (Int) -> Unit) {
+          Button(onClick = { onSelect(0) }) { }
+          Button(onClick = { onSelect(selected) }) { }
+        }
+      """,
+      "also passed on as a value" to """
+        data class Data(val id: Int)
+        @Composable fun Child(onClick: (Int) -> Unit) {}
+
+        @Composable
+        fun Test(data: Data, onClick: (Int) -> Unit) {
+          Child(onClick = onClick)
+          Button(onClick = { onClick(data.id) }) { }
+        }
+      """,
+      "passed negated" to """
+        @Composable
+        fun Toggle(checked: Boolean, onCheckedChange: (Boolean) -> Unit) {
+          Button(onClick = { onCheckedChange(!checked) }) { }
+        }
+      """,
+    ) { (_, snippet) ->
+      val code = composeSnippet(snippet.trimIndent())
+
+      UnnecessaryEventHandlerParameter().lintWithContext(environment, code).shouldBeEmpty()
+      UnnecessaryEventHandlerParameter(TestConfig("reportConstantArguments" to false))
+        .lintWithContext(environment, code)
+        .shouldBeEmpty()
+    }
+  }
+
+  should("report a state parameter passed by every call once") {
+    // language=kotlin
+    val code = composeSnippet(
+      """
+        data class Data(val id: Int)
+        @Composable
+        fun Test(data: Data, onClick: (Int) -> Unit) {
+          Button(onClick = { onClick(data.id) }) { }
+          Button(onClick = { onClick(data.id) }) { }
+        }
+      """.trimIndent(),
+    )
+
+    val findings = UnnecessaryEventHandlerParameter().lintWithContext(environment, code)
+
+    findings.single().message shouldBe "Unnecessary event callback arguments. Move all \"data\" access " +
+      "to the parent composable event handler and switch \"onClick\" type to \"() -> Unit\""
+  }
+
+  should("report all state arguments of an event handler in one finding") {
+    // language=kotlin
+    val code = composeSnippet(
+      """
+        data class Data(val id: Int, val title: String)
+        @Composable
+        fun Test(data: Data, count: Int, onClick: (Int, String, Int) -> Unit) {
+          Button(onClick = { onClick(data.id, data.title, count) }) { }
+        }
+      """.trimIndent(),
+    )
+
+    val findings = UnnecessaryEventHandlerParameter().lintWithContext(environment, code)
+
+    findings.single().message shouldBe "Unnecessary event callback arguments. Move all \"data\", \"count\" access " +
+      "to the parent composable event handler and switch \"onClick\" type to \"() -> Unit\""
+  }
+
+  should("report a state parameter passed through invoke and keep a nullable handler nullable") {
+    // language=kotlin
+    val code = composeSnippet(
+      """
+        data class Data(val id: Int)
+        @Composable
+        fun Test(data: Data, onA: ((Int) -> Unit)?, onB: (Int) -> Unit) {
+          Button(onClick = { onA?.invoke(data.id) }) { }
+          Button(onClick = { onB.invoke(data.id) }) { }
+        }
+      """.trimIndent(),
+    )
+
+    val findings = UnnecessaryEventHandlerParameter().lintWithContext(environment, code)
+
+    findings.map { it.message } shouldBe listOf(
+      "Unnecessary event callback arguments. Move all \"data\" access to the parent composable event handler and " +
+        "switch \"onA\" type to \"(() -> Unit)?\"",
+      "Unnecessary event callback arguments. Move all \"data\" access to the parent composable event handler and " +
+        "switch \"onB\" type to \"() -> Unit\"",
+    )
+  }
+
+  should("report a parenthesized state parameter access") {
+    // language=kotlin
+    val code = composeSnippet(
+      """
+        data class Data(val id: Int)
+        @Composable
+        fun Test(data: Data, onClick: (Int) -> Unit) {
+          Button(onClick = { onClick((data.id)) }) { }
+        }
+      """.trimIndent(),
+    )
+
+    val findings = UnnecessaryEventHandlerParameter().lintWithContext(environment, code)
+
+    findings shouldHaveSize 1
+  }
+
+  should("report a constant passed to a handler which is checked for null") {
+    // language=kotlin
+    val code = composeSnippet(
+      """
+        @Composable
+        fun Test(onA: ((Int) -> Unit)? = null) {
+          Button(onClick = { if (onA != null) onA(1) }) { }
+        }
+      """.trimIndent(),
+    )
+
+    val findings = UnnecessaryEventHandlerParameter().lintWithContext(environment, code)
+
+    findings.single().message shouldBe "Unnecessary event callback arguments. Move constant \"1\" to the parent " +
+      "composable event handler and switch \"onA\" type to \"(() -> Unit)?\""
+  }
+
+  should("not crash on calls with different argument counts") {
+    // language=kotlin
+    val code = composeSnippet(
+      """
+        data class Data(val id: Int)
+        @Composable
+        fun Test(data: Data, onClick: (Int) -> Unit) {
+          Button(onClick = { onClick(data.id) }) { }
+          Button(onClick = { onClick() }) { }
+        }
+      """.trimIndent(),
+    )
+
+    UnnecessaryEventHandlerParameter().lintWithContext(environment, code)
+  }
+
+  should("not report an argument read from a local val which re-declares a state parameter") {
+    // language=kotlin
+    val code = composeSnippet(
+      """
+        data class Data(val id: Int)
+        @Composable
+        fun Test(data: Data, onClick: (Int) -> Unit) {
+          val data = data.copy(id = 1)
+          Button(onClick = { onClick(data.id) }) { }
+        }
+      """.trimIndent(),
+    )
+
+    UnnecessaryEventHandlerParameter().lintWithContext(environment, code).shouldBeEmpty()
+  }
 })

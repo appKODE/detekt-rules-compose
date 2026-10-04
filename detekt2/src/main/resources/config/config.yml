@@ -14,10 +14,13 @@ compose:
   ComposableParametersOrdering:
     active: true
     trailingSlotNames: [ 'content' ]
+    allowTrailingEventHandlers: true
+    allowTrailingLambdas: true
   ModifierDefaultValue:
     active: true
   MissingModifierDefaultValue:
     active: true
+    checkAbstractFunctions: false
   TopLevelComposableFunctions:
     active: false
     allowInObjects: false

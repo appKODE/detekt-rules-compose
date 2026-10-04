@@ -16,11 +16,11 @@ Here are some highlights of rules in this rule set:
 
 - `ComposableEventParameterNaming` ensures that all event handler parameters of composable functions are named in the same Compose-like style, i.e. they have `on` prefix and do not use past tense
 
-- `ComposableParametersOrdering` suggests the correct grouping and order of composable functions' parameters, ensures the correct position of the `Modifier` parameter and keeps slots named in `trailingSlotNames` (default `content`) last
+- `ComposableParametersOrdering` suggests the correct grouping and order of composable functions' parameters, ensures the correct position of the `Modifier` parameter and keeps slots named in `trailingSlotNames` (default `content`) last. Overriding and `actual` functions are not checked. `allowTrailingEventHandlers: false` also reports a required event handler placed after optional parameters, `allowTrailingLambdas: false` any required non-composable lambda there
 
 - `ModifierDefaultValue` ensures that `modifier` parameter has a correct default value
 
-- `MissingModifierDefaultValue` checks if `modifier` default value is specified
+- `MissingModifierDefaultValue` checks if `modifier` default value is specified. Overriding and `actual` functions are skipped. Abstract and open functions and functions of interfaces are skipped too, unless `checkAbstractFunctions: true` is set: the Compose compiler accepts default values in abstract composables only from Kotlin language version 2.1 and in open ones from 2.2 (K2 compiler)
 
 - `PublicComposablePreview` finds and reports composable previews which are not marked as `private`
 
@@ -68,10 +68,13 @@ compose:
   ComposableParametersOrdering:
     active: true
     trailingSlotNames: [ 'content' ]
+    allowTrailingEventHandlers: true
+    allowTrailingLambdas: true
   ModifierHeightWithText:
     active: true
   MissingModifierDefaultValue:
     active: true
+    checkAbstractFunctions: false
   PublicComposablePreview:
     active: true
   TopLevelComposableFunctions:
