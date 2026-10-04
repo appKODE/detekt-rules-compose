@@ -19,6 +19,7 @@ compose:
     active: true
   MissingModifierDefaultValue:
     active: true
+    checkAbstractFunctions: false
   TopLevelComposableFunctions:
     active: false
     allowInObjects: false
