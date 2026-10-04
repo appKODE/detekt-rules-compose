@@ -190,6 +190,27 @@ class ComposeSemanticContractTest : ShouldSpec({
     )
   }
 
+  should("tell whether a reference targets a parameter, null when it is unresolved") {
+    val answers = withComposeSemantic(environment, FIXTURE) { semantic, file ->
+      val function = file.declarations.filterIsInstance<KtNamedFunction>().single { it.name == "targets" }
+      function.collectDescendantsOfType<KtNameReferenceExpression>()
+        .filter { it.getReferencedName() in setOf("onEvent", "missing") }
+        .associate { reference ->
+          reference.parentsWithSelf.first { it.parent is KtBlockExpression }.text to
+            semantic.referenceTargetsParameter(reference, function.valueParameters.single())
+        }
+    }
+
+    answers shouldBe mapOf(
+      "onEvent(1)" to true,
+      "onEvent(1, 2)" to false,
+      "onEvent.invoke(3)" to true,
+      "onEvent(4)" to false,
+      "take(onEvent)" to true,
+      "take(missing)" to null,
+    )
+  }
+
   should("detect sealed receiver types and direct sealed supertypes") {
     val answers = withComposeSemantic(environment, FIXTURE) { semantic, file ->
       file.collectDescendantsOfType<KtDotQualifiedExpression>()
@@ -295,6 +316,18 @@ private val FIXTURE = composeSnippet(
       take(local)
       take(value)
       take(Kind.A.ordinal)
+    }
+
+    fun onEvent(first: Int, second: Int) {}
+    fun wrap(block: ((Int) -> Unit) -> Unit) {}
+
+    fun targets(onEvent: (Int) -> Unit) {
+      onEvent(1)
+      onEvent(1, 2)
+      onEvent.invoke(3)
+      wrap { onEvent -> onEvent(4) }
+      take(onEvent)
+      take(missing)
     }
 
     fun receivers(

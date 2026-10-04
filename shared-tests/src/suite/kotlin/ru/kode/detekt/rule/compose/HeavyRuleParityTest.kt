@@ -17,7 +17,7 @@ class HeavyRuleParityTest : ShouldSpec({
   val environment = createEnvironment()
 
   SharedRuleContracts.heavyParityCases.forEach { parityCase ->
-    should("shared parity: ${parityCase.ruleId}") {
+    should("shared parity: ${parityCase.name}") {
       val rule = createHeavyRule(parityCase)
       val findings = when (rule) {
         is ConditionCouldBeLifted -> rule.lintWithContext(environment, composeSnippet(parityCase.code))
@@ -30,21 +30,15 @@ class HeavyRuleParityTest : ShouldSpec({
   }
 
   // Without the fake Compose declarations nothing resolves: rules must degrade gracefully, not crash.
-  // UnnecessaryEventHandlerParameter only uses resolution to skip sealed receivers, so it still reports.
-  val expectedUnresolvedFindings = mapOf(
-    "ConditionCouldBeLifted" to 0,
-    "ReusedModifierInstance" to 0,
-    "UnnecessaryEventHandlerParameter" to 1,
-  )
   SharedRuleContracts.heavyParityCases.forEach { parityCase ->
-    should("not crash on unresolved symbols: ${parityCase.ruleId}") {
+    should("not crash on unresolved symbols: ${parityCase.name}") {
       val findings = when (val rule = createHeavyRule(parityCase)) {
         is ConditionCouldBeLifted -> rule.lintWithContext(environment, parityCase.code)
         is ReusedModifierInstance -> rule.lintWithContext(environment, parityCase.code)
         is UnnecessaryEventHandlerParameter -> rule.lintWithContext(environment, parityCase.code)
         else -> error("Unexpected heavy rule type: ${rule::class.simpleName}")
       }
-      findings shouldHaveSize expectedUnresolvedFindings.getValue(parityCase.ruleId)
+      findings shouldHaveSize parityCase.expectedUnresolvedFindings
     }
   }
 })

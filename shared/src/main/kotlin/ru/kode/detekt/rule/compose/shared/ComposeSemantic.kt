@@ -4,6 +4,7 @@ import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtLambdaExpression
 import org.jetbrains.kotlin.psi.KtNameReferenceExpression
+import org.jetbrains.kotlin.psi.KtParameter
 
 interface ComposeSemantic {
   fun isComposableCall(call: KtCallExpression, composableAnnotationPackage: String): Boolean
@@ -29,4 +30,7 @@ interface ComposeSemantic {
    * or companion object; false when it can't be resolved.
    */
   fun isConstantReference(reference: KtNameReferenceExpression): Boolean
+
+  /** Whether [reference] resolves to [parameter] and not to a namesake; null when it can't be resolved. */
+  fun referenceTargetsParameter(reference: KtNameReferenceExpression, parameter: KtParameter): Boolean?
 }

@@ -19,6 +19,7 @@ import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtLambdaExpression
 import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
+import org.jetbrains.kotlin.psi.KtParameter
 import ru.kode.detekt.rule.compose.shared.ComposeDiagnostic
 import ru.kode.detekt.rule.compose.shared.ComposeSemantic
 
@@ -99,6 +100,10 @@ internal object AnalysisApiComposeSemantic : ComposeSemantic {
         else -> false
       }
     }
+  }
+
+  override fun referenceTargetsParameter(reference: KtNameReferenceExpression, parameter: KtParameter): Boolean? {
+    return analyze(reference) { reference.mainReference.resolveToSymbol()?.psi?.let { it == parameter } }
   }
 }
 

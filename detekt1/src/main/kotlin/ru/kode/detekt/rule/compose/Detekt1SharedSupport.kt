@@ -21,7 +21,9 @@ import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtLambdaExpression
 import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
+import org.jetbrains.kotlin.psi.KtParameter
 import org.jetbrains.kotlin.resolve.BindingContext
+import org.jetbrains.kotlin.resolve.DescriptorToSourceUtils
 import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.resolve.calls.util.getType
 import ru.kode.detekt.rule.compose.shared.ComposeDiagnostic
@@ -117,6 +119,11 @@ internal class BindingContextComposeSemantic(
 
       else -> false
     }
+  }
+
+  override fun referenceTargetsParameter(reference: KtNameReferenceExpression, parameter: KtParameter): Boolean? {
+    val target = bindingContext[BindingContext.REFERENCE_TARGET, reference] ?: return null
+    return DescriptorToSourceUtils.descriptorToDeclaration(target) == parameter
   }
 }
 
