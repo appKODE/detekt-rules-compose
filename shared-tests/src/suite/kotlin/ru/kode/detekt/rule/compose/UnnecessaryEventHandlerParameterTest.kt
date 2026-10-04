@@ -924,4 +924,20 @@ class UnnecessaryEventHandlerParameterTest : ShouldSpec({
 
     UnnecessaryEventHandlerParameter().lintWithContext(environment, code)
   }
+
+  should("not report an argument read from a local val which re-declares a state parameter") {
+    // language=kotlin
+    val code = composeSnippet(
+      """
+        data class Data(val id: Int)
+        @Composable
+        fun Test(data: Data, onClick: (Int) -> Unit) {
+          val data = data.copy(id = 1)
+          Button(onClick = { onClick(data.id) }) { }
+        }
+      """.trimIndent(),
+    )
+
+    UnnecessaryEventHandlerParameter().lintWithContext(environment, code).shouldBeEmpty()
+  }
 })

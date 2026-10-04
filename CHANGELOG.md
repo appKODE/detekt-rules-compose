@@ -25,6 +25,9 @@ entries can become unused and, with `maxIssues: 0`, a build that passed on 2.1.1
   * `onClick.invoke(data.id)` and `onClick?.invoke(data.id)` are now reported like `onClick(data.id)`
   * a constant argument is now reported when the handler is checked for null before the call, as in
     `if (onClick != null) onClick(1)`
+  * an argument read from a local `val` which re-declares a state parameter (`val data = data.copy(id = 1)` and
+    then `onClick(data.id)`) is no longer reported, the parent doesn't have that value
+  * state arguments and constant arguments of one handler are still reported as two separate findings
 * `ComposableParametersOrdering`: overriding and `actual` functions are no longer reported, their order is dictated
   by the overridden or `expect` declaration, which is still checked (#48)
 * `ComposableParametersOrdering`: new `allowTrailingEventHandlers` option (default `true`). With `false` a required

@@ -44,4 +44,38 @@ class NoTypeResolutionTest : ShouldSpec({
 
     UnnecessaryEventHandlerParameter().lint(code).shouldBeEmpty()
   }
+
+  should("not take a same-named function call with another number of arguments for an event handler call") {
+    // language=kotlin
+    val code = composeSnippet(
+      """
+        data class Data(val id: Int)
+        fun onClick(id: Int, position: Int) {}
+
+        @Composable
+        fun Test(data: Data, onClick: (Int) -> Unit) {
+          Button(onClick = { onClick(data.id, 0) }) {}
+        }
+      """.trimIndent(),
+    )
+
+    UnnecessaryEventHandlerParameter().lint(code).shouldBeEmpty()
+  }
+
+  should("not take a same-named function call with a named argument for an event handler call") {
+    // language=kotlin
+    val code = composeSnippet(
+      """
+        data class Data(val id: Int)
+        fun onClick(id: Int) {}
+
+        @Composable
+        fun Test(data: Data, onClick: (Int) -> Unit) {
+          Button(onClick = { onClick(id = data.id) }) {}
+        }
+      """.trimIndent(),
+    )
+
+    UnnecessaryEventHandlerParameter().lint(code).shouldBeEmpty()
+  }
 })

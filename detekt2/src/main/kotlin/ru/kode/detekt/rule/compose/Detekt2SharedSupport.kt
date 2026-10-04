@@ -103,7 +103,8 @@ internal object AnalysisApiComposeSemantic : ComposeSemantic {
   }
 
   override fun referenceTargetsParameter(reference: KtNameReferenceExpression, parameter: KtParameter): Boolean? {
-    return analyze(reference) { reference.mainReference.resolveToSymbol()?.psi?.let { it == parameter } }
+    // a resolved symbol without source (a library declaration) is not the parameter, only no symbol is "unknown"
+    return analyze(reference) { reference.mainReference.resolveToSymbol()?.let { it.psi == parameter } }
   }
 }
 
