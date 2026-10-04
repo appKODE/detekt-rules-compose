@@ -1,6 +1,6 @@
 # Changelog
 
-## 2.1.2
+## 2.1.2 - 2026-10-04
 
 ### Upgrading from 2.1.1
 
