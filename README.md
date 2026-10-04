@@ -20,7 +20,7 @@ Here are some highlights of rules in this rule set:
 
 - `ModifierDefaultValue` ensures that `modifier` parameter has a correct default value
 
-- `MissingModifierDefaultValue` checks if `modifier` default value is specified. Overriding and `actual` functions are skipped. Abstract and open functions and functions of interfaces are skipped too, unless `checkAbstractFunctions: true` is set: the Compose compiler accepts default values in abstract composables only from Kotlin language version 2.1 and in open ones from 2.2
+- `MissingModifierDefaultValue` checks if `modifier` default value is specified. Overriding and `actual` functions are skipped. Abstract and open functions and functions of interfaces are skipped too, unless `checkAbstractFunctions: true` is set: the Compose compiler accepts default values in abstract composables only from Kotlin language version 2.1 and in open ones from 2.2 (K2 compiler)
 
 - `PublicComposablePreview` finds and reports composable previews which are not marked as `private`
 
