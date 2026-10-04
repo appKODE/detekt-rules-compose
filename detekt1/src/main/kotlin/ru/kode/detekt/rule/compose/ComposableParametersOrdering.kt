@@ -12,7 +12,11 @@ class ComposableParametersOrdering(config: Config = Config.empty) :
 
   private val allowTrailingEventHandlers by config(defaultValue = true)
 
-  private val analyzer by lazy { ComposableParametersOrderingAnalyzer(trailingSlotNames, allowTrailingEventHandlers) }
+  private val allowTrailingLambdas by config(defaultValue = true)
+
+  private val analyzer by lazy {
+    ComposableParametersOrderingAnalyzer(trailingSlotNames, allowTrailingEventHandlers, allowTrailingLambdas)
+  }
 
   override fun visitNamedFunction(function: KtNamedFunction) {
     reportDiagnostics(analyzer.analyze(function))

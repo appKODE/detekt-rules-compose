@@ -23,6 +23,7 @@ import ru.kode.detekt.rule.compose.shared.isOverrideLike
  *
  * With [allowTrailingEventHandlers] turned off a required event handler (a non-composable lambda without a receiver
  * returning `Unit`) is reported when it follows optional parameters, unless it is named in [trailingSlotNames].
+ * With [allowTrailingLambdas] turned off this applies to every required non-composable lambda, event handlers included.
  *
  * Overriding and `actual` functions are not checked: their order is dictated by the overridden or `expect` declaration.
  *
@@ -49,6 +50,7 @@ import ru.kode.detekt.rule.compose.shared.isOverrideLike
 class ComposableParametersOrderingAnalyzer(
   private val trailingSlotNames: List<String> = listOf("content"),
   private val allowTrailingEventHandlers: Boolean = true,
+  private val allowTrailingLambdas: Boolean = true,
 ) {
   fun analyze(function: KtNamedFunction): List<ComposeDiagnostic> {
     if (!function.hasAnnotationNamed("Composable")) return emptyList()
@@ -70,17 +72,22 @@ class ComposableParametersOrderingAnalyzer(
       )
     }
 
-    if (!allowTrailingEventHandlers) {
+    if (!allowTrailingEventHandlers || !allowTrailingLambdas) {
       val firstOptionalParameterIndex = function.valueParameters.indexOfFirst { it.hasDefaultValue() }
-      val misplacedEventHandler = function.valueParameters.withIndex().firstOrNull { (index, parameter) ->
-        firstOptionalParameterIndex in 0 until index && parameter.isEventHandler() &&
-          !parameter.hasDefaultValue() && parameter.name !in trailingSlotNames
+      val misplacedLambda = function.valueParameters.withIndex().firstOrNull { (index, parameter) ->
+        firstOptionalParameterIndex in 0 until index && !parameter.hasDefaultValue() &&
+          parameter.name !in trailingSlotNames &&
+          (
+            parameter.isEventHandler() ||
+              (!allowTrailingLambdas && parameter.isLambda() && !parameter.isComposableSlot())
+            )
       }?.value
-      if (misplacedEventHandler != null) {
+      if (misplacedLambda != null) {
+        val kind = if (misplacedLambda.isEventHandler()) "event handler" else "lambda"
         return listOf(
           ComposeDiagnostic(
-            "Required event handler \"${misplacedEventHandler.name}\" should be placed before optional parameters",
-            misplacedEventHandler,
+            "Required $kind \"${misplacedLambda.name}\" should be placed before optional parameters",
+            misplacedLambda,
           ),
         )
       }

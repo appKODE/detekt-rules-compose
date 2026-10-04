@@ -34,6 +34,10 @@ entries can become unused and, with `maxIssues: 0`, a build that passed on 2.1.1
   event handler (a non-composable lambda without a receiver which returns `Unit`) placed after optional parameters is
   reported, as in `fun Item(id: String, modifier: Modifier = Modifier, onClick: () -> Unit)`. Lambdas with a
   receiver, lambdas returning a value and parameters named in `trailingSlotNames` are not reported (#50)
+* `ComposableParametersOrdering`: new `allowTrailingLambdas` option (default `true`). With `false` every required
+  non-composable lambda placed after optional parameters is reported, event handlers included, like
+  `validator: (String) -> Boolean` or `onDraw: DrawScope.() -> Unit`. Parameters named in `trailingSlotNames` are
+  still not reported, add the names of DSL builder lambdas which should stay last there (#50)
 * `MissingModifierDefaultValue`: new `checkAbstractFunctions` option (default `false`). With `true` abstract and open
   functions and functions of interfaces are checked too. Turn it on only if the project compiles with the K2
   compiler and Kotlin language version 2.1 (abstract functions) or 2.2 (open functions), older setups reject default

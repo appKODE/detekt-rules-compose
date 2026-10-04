@@ -15,6 +15,7 @@ compose:
     active: true
     trailingSlotNames: [ 'content' ]
     allowTrailingEventHandlers: true
+    allowTrailingLambdas: true
   ModifierDefaultValue:
     active: true
   MissingModifierDefaultValue:

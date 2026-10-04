@@ -16,7 +16,7 @@ Here are some highlights of rules in this rule set:
 
 - `ComposableEventParameterNaming` ensures that all event handler parameters of composable functions are named in the same Compose-like style, i.e. they have `on` prefix and do not use past tense
 
-- `ComposableParametersOrdering` suggests the correct grouping and order of composable functions' parameters, ensures the correct position of the `Modifier` parameter and keeps slots named in `trailingSlotNames` (default `content`) last. Overriding and `actual` functions are not checked. `allowTrailingEventHandlers: false` also reports a required event handler placed after optional parameters
+- `ComposableParametersOrdering` suggests the correct grouping and order of composable functions' parameters, ensures the correct position of the `Modifier` parameter and keeps slots named in `trailingSlotNames` (default `content`) last. Overriding and `actual` functions are not checked. `allowTrailingEventHandlers: false` also reports a required event handler placed after optional parameters, `allowTrailingLambdas: false` any required non-composable lambda there
 
 - `ModifierDefaultValue` ensures that `modifier` parameter has a correct default value
 
@@ -69,6 +69,7 @@ compose:
     active: true
     trailingSlotNames: [ 'content' ]
     allowTrailingEventHandlers: true
+    allowTrailingLambdas: true
   ModifierHeightWithText:
     active: true
   MissingModifierDefaultValue:
