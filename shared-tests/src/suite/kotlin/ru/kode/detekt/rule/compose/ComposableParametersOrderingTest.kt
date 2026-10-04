@@ -688,6 +688,89 @@ class ComposableParametersOrderingTest : ShouldSpec() {
 
         findings.shouldBeEmpty()
       }
+
+      should("not report an overriding function, its order is set by the overridden one (#48)") {
+        // language=kotlin
+        val code = """
+        class ScreenImpl : Screen {
+          @Composable
+          override fun Content(title: String, modifier: Modifier, enabled: Boolean) {
+          }
+        }
+        """.trimIndent()
+
+        val findings = ComposableParametersOrdering().lint(code)
+
+        findings.shouldBeEmpty()
+      }
+
+      should("not report an overriding function of an anonymous object (#48)") {
+        // language=kotlin
+        val code = """
+        val screen = object : Screen {
+          @Composable
+          override fun Content(title: String, modifier: Modifier, enabled: Boolean) {
+          }
+        }
+        """.trimIndent()
+
+        val findings = ComposableParametersOrdering().lint(code)
+
+        findings.shouldBeEmpty()
+      }
+
+      should("not report an actual function, its order is set by the expect one") {
+        // language=kotlin
+        val code = """
+        @Composable
+        actual fun Foo(text: String, modifier: Modifier, enabled: Boolean) {
+        }
+        """.trimIndent()
+
+        val findings = ComposableParametersOrdering().lint(code)
+
+        findings.shouldBeEmpty()
+      }
+
+      should("report an expect function") {
+        // language=kotlin
+        val code = """
+        @Composable
+        expect fun Foo(text: String, modifier: Modifier, enabled: Boolean)
+        """.trimIndent()
+
+        val findings = ComposableParametersOrdering().lint(code)
+
+        findings shouldHaveSize 1
+      }
+
+      should("report an interface function") {
+        // language=kotlin
+        val code = """
+        interface Screen {
+          @Composable
+          fun Content(title: String, modifier: Modifier, enabled: Boolean)
+        }
+        """.trimIndent()
+
+        val findings = ComposableParametersOrdering().lint(code)
+
+        findings shouldHaveSize 1
+      }
+
+      should("report an abstract function") {
+        // language=kotlin
+        val code = """
+        abstract class Screen {
+          @Composable
+          abstract fun Content(title: String, modifier: Modifier, enabled: Boolean)
+        }
+        """.trimIndent()
+
+        val findings = ComposableParametersOrdering().lint(code)
+
+        findings shouldHaveSize 1
+      }
     }
   }
 }

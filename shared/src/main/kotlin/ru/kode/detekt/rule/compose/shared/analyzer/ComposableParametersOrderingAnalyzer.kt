@@ -3,9 +3,11 @@ package ru.kode.detekt.rule.compose.shared.analyzer
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import ru.kode.detekt.rule.compose.shared.ComposeDiagnostic
 import ru.kode.detekt.rule.compose.shared.hasAnnotationNamed
+import ru.kode.detekt.rule.compose.shared.isActualLike
 import ru.kode.detekt.rule.compose.shared.isComposableSlot
 import ru.kode.detekt.rule.compose.shared.isLambda
 import ru.kode.detekt.rule.compose.shared.isModifier
+import ru.kode.detekt.rule.compose.shared.isOverrideLike
 
 /**
  * Checks that parameters of Composable functions have a correct order:
@@ -17,6 +19,8 @@ import ru.kode.detekt.rule.compose.shared.isModifier
  * Other composable slots are not forced to the end: a required slot can stay among the required parameters and an
  * optional one among the optional parameters. Trailing lambdas may follow the optional parameters, but only the last
  * parameter may be a required composable slot there.
+ *
+ * Overriding and `actual` functions are not checked: their order is dictated by the overridden or `expect` declaration.
  *
  * Non-compliant:
  *
@@ -41,6 +45,8 @@ import ru.kode.detekt.rule.compose.shared.isModifier
 class ComposableParametersOrderingAnalyzer(private val trailingSlotNames: List<String> = listOf("content")) {
   fun analyze(function: KtNamedFunction): List<ComposeDiagnostic> {
     if (!function.hasAnnotationNamed("Composable")) return emptyList()
+    // the order is dictated by the overridden or the expect declaration
+    if (function.isOverrideLike() || function.isActualLike()) return emptyList()
 
     val valueParameters = function.valueParameters.dropLastWhile { it.isLambda() }
     val lastRequiredIndex = valueParameters.indexOfLast { !it.hasDefaultValue() }
