@@ -4,7 +4,7 @@
 
 ### Upgrading from 2.1.1
 
-No configuration change is needed, the two new options default to the 2.1.1 behaviour.
+No configuration change is needed, the three new options default to the 2.1.1 behaviour.
 `UnnecessaryEventHandlerParameter` reports fewer findings in some places and more in others (see below), so baseline
 entries can become unused and, with `maxIssues: 0`, a build that passed on 2.1.1 can fail on existing code.
 
