@@ -1,5 +1,7 @@
 package ru.kode.detekt.rule.compose.shared.analyzer
 
+import org.jetbrains.kotlin.lexer.KtTokens
+import org.jetbrains.kotlin.psi.KtBinaryExpression
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtConstantExpression
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
@@ -57,12 +59,15 @@ import ru.kode.detekt.rule.compose.shared.isEventHandler
  * }
  * ```
  *
+ * A state parameter argument is reported when every call of the event handler (`onClick(...)` or
+ * `onClick.invoke(...)`) passes the same expression at that position and the handler is used nowhere else (not
+ * passed on as a value, a comparison with `null` aside): otherwise the argument tells the calls apart or the handler
+ * type is dictated by its other user. All such arguments of a handler are reported in one finding.
+ *
  * A constant argument (a literal, a string without templates, a Kotlin `const val`, an enum entry or an object) is
- * reported the same way when every call of the event handler (`onClose(...)` or `onClose?.invoke(...)`) passes the
- * same constant at that position and the handler is used nowhere else (not passed on as a value): the parent already
- * knows it, so `onClose(Intent.Close)` should become `onClose()`. All such arguments of a handler are reported in one
- * finding. Different constants (`onCheckedChange(true)` and `onCheckedChange(false)`) are not reported.
- * Disabled with [reportConstantArguments].
+ * reported under the same conditions, in a finding of its own: the parent already knows it, so
+ * `onClose(Intent.Close)` should become `onClose()`. Different constants (`onCheckedChange(true)` and
+ * `onCheckedChange(false)`) are not reported. Disabled with [reportConstantArguments].
  */
 class UnnecessaryEventHandlerParameterAnalyzer(
   private val semantic: ComposeSemantic,
@@ -86,32 +91,20 @@ class UnnecessaryEventHandlerParameterAnalyzer(
             ?: expression.looksLikeReferenceTo(eventParameter, call, function)
           if (!targetsEventParameter) return
 
-          if (call != null) {
-            eventCalls.getOrPut(eventParameter) { mutableListOf() } += call
-          } else {
-            eventsUsedOtherwise += eventParameter
+          when {
+            call != null -> eventCalls.getOrPut(eventParameter) { mutableListOf() } += call
+            !expression.isComparedWithNull() -> eventsUsedOtherwise += eventParameter
           }
         }
       },
     )
 
-    val diagnostics = mutableListOf<ComposeDiagnostic>()
-    eventCalls.forEach { (eventParameter, calls) ->
-      calls.forEach { call ->
-        call.valueArguments.forEachIndexed { index, argument ->
-          val stateParameterName = argument.getArgumentExpression()?.stateParameterName(stateParameters, function)
-          if (stateParameterName != null) {
-            diagnostics += buildDiagnostic(eventParameter, "all \"$stateParameterName\" access", setOf(index))
-          }
-        }
-      }
+    return eventCalls.filterKeys { it !in eventsUsedOtherwise }.flatMap { (eventParameter, calls) ->
+      listOfNotNull(
+        stateArgumentDiagnostic(eventParameter, calls, stateParameters, function),
+        if (reportConstantArguments) constantArgumentDiagnostic(eventParameter, calls) else null,
+      )
     }
-    if (reportConstantArguments) {
-      eventCalls.filterKeys { it !in eventsUsedOtherwise }.forEach { (eventParameter, calls) ->
-        constantArgumentDiagnostic(eventParameter, calls)?.let { diagnostics += it }
-      }
-    }
-    return diagnostics
   }
 
   /** The `handler(...)` or `handler.invoke(...)` call this reference is the function of. */
@@ -161,30 +154,60 @@ class UnnecessaryEventHandlerParameterAnalyzer(
       .last() as? KtNameReferenceExpression
   }
 
+  private fun KtExpression.isComparedWithNull(): Boolean {
+    val comparison = parent as? KtBinaryExpression ?: return false
+    return (comparison.operationToken == KtTokens.EQEQ || comparison.operationToken == KtTokens.EXCLEQ) &&
+      listOfNotNull(comparison.left, comparison.right).any(KtPsiUtil::isNullConstant)
+  }
+
+  /** One finding for all argument indexes which every call of [eventParameter] passes the same state at. */
+  private fun stateArgumentDiagnostic(
+    eventParameter: KtParameter,
+    calls: List<KtCallExpression>,
+    stateParameters: List<KtParameter>,
+    function: KtNamedFunction,
+  ): ComposeDiagnostic? {
+    val stateParameterNames = argumentsOfEveryCall(calls) { it.stateParameterName(stateParameters, function) }
+    if (stateParameterNames.isEmpty()) return null
+    return buildDiagnostic(
+      eventParameter,
+      "all ${stateParameterNames.values.distinct().joinToString { "\"$it\"" }} access",
+      stateParameterNames.keys,
+    )
+  }
+
   /** One finding for all argument indexes which every call of [eventParameter] passes the same constant at. */
   private fun constantArgumentDiagnostic(
     eventParameter: KtParameter,
     calls: List<KtCallExpression>,
   ): ComposeDiagnostic? {
-    val constants = (0 until calls.minOf { it.valueArguments.size }).mapNotNull { index ->
-      val constant = calls.map { call ->
-        call.valueArguments[index].getArgumentExpression()
-          ?.let(KtPsiUtil::safeDeparenthesize)
-          ?.takeIf { it.isConstant() }
-          ?.text
-          ?: return@mapNotNull null
-      }.distinct().singleOrNull() ?: return@mapNotNull null
-      index to constant
-    }.toMap()
+    val constants = argumentsOfEveryCall(calls) { argument -> argument.text.takeIf { argument.isConstant() } }
     if (constants.isEmpty()) return null
     val movedArgument = if (constants.size == 1) "constant" else "constants"
     return buildDiagnostic(
       eventParameter,
-      "$movedArgument ${constants.values.joinToString {
-        "\"$it\""
-      }}",
+      "$movedArgument ${constants.values.joinToString { "\"$it\"" }}",
       constants.keys,
     )
+  }
+
+  /**
+   * Argument indexes at which every call passes the same expression and [describe] accepts it in every call, with
+   * the description of that expression.
+   */
+  private fun argumentsOfEveryCall(
+    calls: List<KtCallExpression>,
+    describe: (KtExpression) -> String?,
+  ): Map<Int, String> {
+    return (0 until calls.minOf { it.valueArguments.size }).mapNotNull { index ->
+      val arguments = calls.map { call ->
+        call.valueArguments[index].getArgumentExpression()?.let(KtPsiUtil::safeDeparenthesize)
+          ?: return@mapNotNull null
+      }
+      if (arguments.distinctBy { it.text }.size > 1) return@mapNotNull null
+      val descriptions = arguments.map { describe(it) ?: return@mapNotNull null }
+      index to descriptions.first()
+    }.toMap()
   }
 
   private fun KtExpression.isConstant(): Boolean = when (this) {
