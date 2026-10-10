@@ -2,8 +2,10 @@ ConditionParity.kt:32:5 ConditionCouldBeLifted Condition could be lifted out of 
 ConditionParity.kt:43:5 ConditionCouldBeLifted Condition could be lifted out of &quot;Column&quot;
 NewRules.kt:12:7 StateReadCouldBeLowered &quot;isVisible&quot; is only used inside the content of &quot;Row&quot;. Read the state there instead
 NewRules.kt:25:17 NonImmutableDataClassParameter Parameter &quot;profile&quot; is a data class &quot;Profile&quot; which is not marked with @Immutable or @Stable
-NewRules.kt:37:7 StateReadCouldBeLowered &quot;isVisible&quot; is only used inside the &quot;itemContent&quot; slot of &quot;Items&quot;. Read the state there instead
-NewRules.kt:48:17 NonImmutableDataClassParameter Parameter &quot;profiles&quot; uses a data class &quot;Profile&quot; which is not marked with @Immutable or @Stable
+NewRules.kt:32:12 PartiallyUsedViewState Parameter &quot;state&quot; reads only 1 of 3 &quot;HeaderViewState&quot; properties (title). Pass them instead of the whole state
+NewRules.kt:44:7 StateReadCouldBeLowered &quot;isVisible&quot; is only used inside the &quot;itemContent&quot; slot of &quot;Items&quot;. Read the state there instead
+NewRules.kt:55:17 NonImmutableDataClassParameter Parameter &quot;profiles&quot; uses a data class &quot;Profile&quot; which is not marked with @Immutable or @Stable
+NewRules.kt:63:12 PartiallyUsedViewState Parameter &quot;state&quot; reads only 1 of 3 &quot;HeaderViewState&quot; properties (subtitle). Pass them instead of the whole state
 Violations.kt:15:5 ReusedModifierInstance Composable uses &quot;modifier&quot; on the wrong level, non-direct children should use &quot;Modifier&quot;
 Violations.kt:20:32 UnnecessaryEventHandlerParameter Unnecessary event callback arguments. Move all &quot;item&quot; access to the parent composable event handler and switch &quot;onClick&quot; type to &quot;() -&gt; Unit&quot;
 Violations.kt:27:27 ModifierHeightWithText Composable uses &quot;height&quot; modifier and contains a Text child. Use heightIn(min = N.dp) instead

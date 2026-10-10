@@ -26,6 +26,13 @@ fun ProfileCard(profile: Profile) {
   Text(profile.name)
 }
 
+class HeaderViewState(val title: String, val subtitle: String, val count: Int)
+
+@Composable
+fun Header(state: HeaderViewState) {
+  Text(state.title)
+}
+
 // The cases below need the callee, the type arguments and the receivers to be resolved.
 @Composable
 inline fun Items(crossinline itemContent: @Composable () -> Unit) {
@@ -47,4 +54,16 @@ fun LoweredIntoItem(visible: State<Boolean>, title: String) {
 @Composable
 fun ProfileList(profiles: List<Profile>) {
   Text(profiles.size.toString())
+}
+
+// stands in for the one of the standard library, whose metadata the oldest detekt-cli can't read
+inline fun <T, R> with(receiver: T, block: T.() -> R): R = receiver.block()
+
+@Composable
+fun Titles(state: HeaderViewState, other: HeaderViewState) {
+  with(state) {
+    with(other) { Text(title) }
+    Text(subtitle)
+  }
+  Text(other.toString())
 }

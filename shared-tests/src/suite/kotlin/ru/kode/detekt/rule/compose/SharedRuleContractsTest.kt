@@ -27,6 +27,7 @@ class SharedRuleContractsTest : ShouldSpec({
     is UnnecessaryEventHandlerParameter -> rule.lintWithContext(environment, code)
     is StateReadCouldBeLowered -> rule.lintWithContext(environment, code)
     is NonImmutableDataClassParameter -> rule.lintWithContext(environment, code)
+    is PartiallyUsedViewState -> rule.lintWithContext(environment, code)
     else -> rule.lint(code)
   }
 
@@ -123,6 +124,10 @@ private val expectedFindings = mapOf(
     "profile: Profile" to
       "Parameter \"profile\" is a data class \"Profile\" which is not marked with @Immutable or @Stable"
     ),
+  "PartiallyUsedViewState" to (
+    "state: HeaderViewState" to
+      "Parameter \"state\" reads only 1 of 3 \"HeaderViewState\" properties (title). Pass them instead of the whole state"
+    ),
 )
 
 private fun createRule(contract: RuleContractCase): Rule {
@@ -168,6 +173,8 @@ private fun createRule(contract: RuleContractCase): Rule {
     )
 
     "NonImmutableDataClassParameter" -> NonImmutableDataClassParameter(config)
+
+    "PartiallyUsedViewState" -> PartiallyUsedViewState(config)
 
     else -> error("Unknown rule id: ${contract.ruleId}")
   }

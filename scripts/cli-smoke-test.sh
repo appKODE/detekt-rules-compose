@@ -13,6 +13,7 @@ GOLDEN_JAR_VERSION=1.4.0
 # findings the $GOLDEN_JAR_VERSION jar can't report, as an ERE alternation (A|B) of a rule id added after it,
 # or a rule id plus the start of a message added after it
 NEW_SINCE_GOLDEN="UnnecessaryLayoutWrapper"
+NEW_SINCE_GOLDEN+="|PartiallyUsedViewState"
 NEW_SINCE_GOLDEN+="|NonImmutableDataClassParameter"
 NEW_SINCE_GOLDEN+="|StateReadCouldBeLowered"
 NEW_SINCE_GOLDEN+="|ComposableParametersOrdering Slot &quot;"

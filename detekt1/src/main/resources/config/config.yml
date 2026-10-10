@@ -39,3 +39,7 @@ compose:
     active: false
     ignoredPackageSegments: [ ]
     stableTypePatterns: [ ]
+  PartiallyUsedViewState:
+    active: false
+    stateClassPattern: '.*ViewState'
+    usedFieldsThreshold: 3

@@ -35,6 +35,7 @@ object SharedRuleContracts {
     "UnnecessaryLayoutWrapper",
     "StateReadCouldBeLowered",
     "NonImmutableDataClassParameter",
+    "PartiallyUsedViewState",
   )
 
   val allCases: List<RuleContractCase> = listOf(
@@ -222,6 +223,20 @@ object SharedRuleContracts {
       expectedCount = 1,
       expectedMessageContains = listOf("is a data class \"Profile\""),
     ),
+    RuleContractCase(
+      ruleId = "PartiallyUsedViewState",
+      code =
+      """
+        data class HeaderViewState(val title: String, val subtitle: String, val count: Int)
+
+        @Composable
+        fun Header(state: HeaderViewState) {
+          Text(text = state.title)
+        }
+      """.trimIndent(),
+      expectedCount = 1,
+      expectedMessageContains = listOf("reads only 1 of 3 \"HeaderViewState\" properties"),
+    ),
   )
 
   val heavyParityCases: List<HeavyRuleParityCase> = listOf(
@@ -323,6 +338,29 @@ object SharedRuleContracts {
         "Parameter \"profile\" is a data class \"Profile\" which is not marked with @Immutable or @Stable",
       ),
       // the data class resolves without the fake Compose declarations too, "Missing" never does
+      expectedUnresolvedFindings = 1,
+      expectedNoTypeResolutionFindings = 0,
+    ),
+    HeavyRuleParityCase(
+      ruleId = "PartiallyUsedViewState",
+      code =
+      """
+        data class HeaderViewState(val title: String, val subtitle: String, val count: Int)
+
+        @Composable
+        fun Header(state: HeaderViewState) {
+          Text(text = state.title)
+        }
+
+        @Composable
+        fun Footer(state: MissingViewState) {
+          Text(text = state.title)
+        }
+      """.trimIndent(),
+      expectedMessages = listOf(
+        "Parameter \"state\" reads only 1 of 3 \"HeaderViewState\" properties (title). Pass them instead of the whole state",
+      ),
+      // the state class resolves without the fake Compose declarations too, "MissingViewState" never does
       expectedUnresolvedFindings = 1,
       expectedNoTypeResolutionFindings = 0,
     ),

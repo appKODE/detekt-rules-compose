@@ -19,6 +19,7 @@ class NoTypeResolutionTest : ShouldSpec({
     "UnnecessaryEventHandlerParameter" to { UnnecessaryEventHandlerParameter() },
     "StateReadCouldBeLowered" to { StateReadCouldBeLowered() },
     "NonImmutableDataClassParameter" to { NonImmutableDataClassParameter() },
+    "PartiallyUsedViewState" to { PartiallyUsedViewState() },
   )
 
   SharedRuleContracts.heavyParityCases.forEach { parityCase ->

@@ -34,6 +34,8 @@ Here are some highlights of rules in this rule set:
 
 - `NonImmutableDataClassParameter` finds a composable parameter whose type, or one of its type arguments (`List<Profile>`), is a data class not marked with `@Immutable` or `@Stable`. With strong skipping (the default since Kotlin 2.0.20) such a composable is still skippable, but the parameter is compared by instance (`===`) instead of `equals()`, so an equal copy of the data class recomposes it. Not reported: data classes of the `kotlin` package, data classes of libraries which the Compose compiler knows to be stable at compile time (`@StabilityInferred`), `ignoredPackageSegments` and `stableTypePatterns`. `stableTypePatterns` takes the lines of the Compose stability configuration file, comment lines included; a line which the Compose compiler would reject fails the run. Limits: a library data class which holds a class of another file or module is still reported, the Compose compiler decides on its stability only at runtime, list it in `stableTypePatterns`; a pattern is not matched against the supertypes of a class; only data classes are judged, so an unstable `List`, Java collection or extension receiver is not reported, and a `List<Profile>` parameter stays unstable for the Compose compiler even when `Profile` is annotated (disabled by default, requires type resolution)
 
+- `PartiallyUsedViewState` finds a composable which takes a whole view state (a class matching `stateClassPattern`) but reads fewer than `usedFieldsThreshold` (default 3) of its properties, such a composable should take the properties instead. Only public and internal properties are counted. Reads inside `with(state) {}`, `state.run {}` and `state.apply {}`, through a destructuring declaration and of inherited properties are counted; `state.let {}` and `state.also {}` pass the state on, a composable which reads the state only through them is not reported (disabled by default, requires type resolution)
+
 - and others...
 
 Rules can be individually turned `on` or `off` in the configuration file.  
@@ -102,6 +104,12 @@ compose:
     # data classes which are stable without an annotation, in the syntax of the Compose stability configuration file
     # (copy its lines here, the rule can't locate the file), for example [ 'com.example.model.**', 'java.time.*' ]
     stableTypePatterns: [ ]
+  PartiallyUsedViewState:
+    active: true
+    # regex for the name of a view state class
+    stateClassPattern: '.*ViewState'
+    # a state with fewer read properties is reported, classes with fewer properties are not checked
+    usedFieldsThreshold: 3
 ```
 
 ## Detekt configuration for Compose

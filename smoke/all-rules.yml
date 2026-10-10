@@ -28,3 +28,5 @@ compose:
     active: true
   NonImmutableDataClassParameter:
     active: true
+  PartiallyUsedViewState:
+    active: true

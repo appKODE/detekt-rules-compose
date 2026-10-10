@@ -25,6 +25,7 @@ class ComposeRuleSetProvider : RuleSetProvider {
         UnnecessaryLayoutWrapper(config),
         StateReadCouldBeLowered(config),
         NonImmutableDataClassParameter(config),
+        PartiallyUsedViewState(config),
       ),
     )
   }
