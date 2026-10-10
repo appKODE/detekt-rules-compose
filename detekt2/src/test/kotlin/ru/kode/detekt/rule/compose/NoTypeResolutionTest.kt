@@ -21,6 +21,7 @@ class NoTypeResolutionTest : ShouldSpec({
     "NonImmutableDataClassParameter" to { NonImmutableDataClassParameter() },
     "PartiallyUsedViewState" to { PartiallyUsedViewState() },
     "UnwrappedValueClassImageModel" to { UnwrappedValueClassImageModel() },
+    "UnnecessaryModifierArgument" to { UnnecessaryModifierArgument() },
   )
 
   SharedRuleContracts.heavyParityCases.forEach { parityCase ->

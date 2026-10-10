@@ -32,3 +32,5 @@ compose:
     active: true
   UnwrappedValueClassImageModel:
     active: true
+  UnnecessaryModifierArgument:
+    active: true

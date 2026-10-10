@@ -37,6 +37,7 @@ object SharedRuleContracts {
     "NonImmutableDataClassParameter",
     "PartiallyUsedViewState",
     "UnwrappedValueClassImageModel",
+    "UnnecessaryModifierArgument",
   )
 
   val allCases: List<RuleContractCase> = listOf(
@@ -255,6 +256,18 @@ object SharedRuleContracts {
       expectedCount = 1,
       expectedMessageContains = listOf("\"avatarUrl\" is a value class"),
     ),
+    RuleContractCase(
+      ruleId = "UnnecessaryModifierArgument",
+      code =
+      """
+        @Composable
+        fun Greeting() {
+          Text("Hello", Modifier)
+        }
+      """.trimIndent(),
+      expectedCount = 1,
+      expectedMessageContains = listOf("is the default value of the \"modifier\" parameter"),
+    ),
   )
 
   val heavyParityCases: List<HeavyRuleParityCase> = listOf(
@@ -403,6 +416,21 @@ object SharedRuleContracts {
       // the value class resolves without the fake Compose declarations too, "Missing" never does
       expectedUnresolvedFindings = 1,
       expectedNoTypeResolutionFindings = 0,
+    ),
+    HeavyRuleParityCase(
+      ruleId = "UnnecessaryModifierArgument",
+      code =
+      """
+        @Composable
+        fun Greeting() {
+          Text("Hello", Modifier)
+          Text("Hello", modifier = Modifier.fillMaxSize())
+          Missing("Hello", Modifier)
+        }
+      """.trimIndent(),
+      expectedMessages = listOf(
+        "\"Modifier\" is the default value of the \"modifier\" parameter of \"Text\". Remove the argument",
+      ),
     ),
   )
 }

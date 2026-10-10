@@ -14,6 +14,7 @@ GOLDEN_JAR_VERSION=1.4.0
 # or a rule id plus the start of a message added after it
 NEW_SINCE_GOLDEN="UnnecessaryLayoutWrapper"
 NEW_SINCE_GOLDEN+="|UnwrappedValueClassImageModel"
+NEW_SINCE_GOLDEN+="|UnnecessaryModifierArgument"
 NEW_SINCE_GOLDEN+="|PartiallyUsedViewState"
 NEW_SINCE_GOLDEN+="|NonImmutableDataClassParameter"
 NEW_SINCE_GOLDEN+="|StateReadCouldBeLowered"

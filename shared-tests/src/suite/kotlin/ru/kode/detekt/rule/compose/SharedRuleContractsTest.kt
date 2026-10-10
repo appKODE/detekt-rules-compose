@@ -29,6 +29,7 @@ class SharedRuleContractsTest : ShouldSpec({
     is NonImmutableDataClassParameter -> rule.lintWithContext(environment, code)
     is PartiallyUsedViewState -> rule.lintWithContext(environment, code)
     is UnwrappedValueClassImageModel -> rule.lintWithContext(environment, code)
+    is UnnecessaryModifierArgument -> rule.lintWithContext(environment, code)
     else -> rule.lint(code)
   }
 
@@ -133,6 +134,10 @@ private val expectedFindings = mapOf(
     "avatarUrl)" to
       "\"avatarUrl\" is a value class, Coil can't load an image from it. Pass its underlying value instead"
     ),
+  "UnnecessaryModifierArgument" to (
+    "Modifier)\n}" to
+      "\"Modifier\" is the default value of the \"modifier\" parameter of \"Text\". Remove the argument"
+    ),
 )
 
 private fun createRule(contract: RuleContractCase): Rule {
@@ -182,6 +187,8 @@ private fun createRule(contract: RuleContractCase): Rule {
     "PartiallyUsedViewState" -> PartiallyUsedViewState(config)
 
     "UnwrappedValueClassImageModel" -> UnwrappedValueClassImageModel(config)
+
+    "UnnecessaryModifierArgument" -> UnnecessaryModifierArgument(config, modifierClassPackage = TEST_COMPOSE_PACKAGE)
 
     else -> error("Unknown rule id: ${contract.ruleId}")
   }

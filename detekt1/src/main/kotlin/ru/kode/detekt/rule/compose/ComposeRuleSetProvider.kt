@@ -27,6 +27,7 @@ class ComposeRuleSetProvider : RuleSetProvider {
         NonImmutableDataClassParameter(config),
         PartiallyUsedViewState(config),
         UnwrappedValueClassImageModel(config),
+        UnnecessaryModifierArgument(config),
       ),
     )
   }

@@ -46,3 +46,5 @@ compose:
   UnwrappedValueClassImageModel:
     active: false
     imageFunctions: [ 'AsyncImage', 'SubcomposeAsyncImage', 'rememberAsyncImagePainter' ]
+  UnnecessaryModifierArgument:
+    active: false

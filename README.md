@@ -38,6 +38,8 @@ Here are some highlights of rules in this rule set:
 
 - `UnwrappedValueClassImageModel` finds a value class passed as is to the `model` of a Coil image function or to the `data` of an `ImageRequest` builder: it compiles because the parameter is `Any?`, but Coil can't load an image from a boxed value class, pass its `.value` instead. Value classes of the `kotlin` package (`UInt`, `Result`) are not reported (disabled by default, requires type resolution)
 
+- `UnnecessaryModifierArgument` finds a `Modifier` passed to a parameter which already has `Modifier` as its default value (`Text("Hello", modifier = Modifier)`), the argument can be removed. Only functions declared in the analyzed sources are checked, the default value of a library function is not available. A positional argument followed by another positional one can't be removed alone, pass the following arguments by name then: `Card("Title", Modifier, false)` becomes `Card("Title", enabled = false)`. The rule does not check whether the call without the argument resolves to another overload, suppress the finding there with `@Suppress("UnnecessaryModifierArgument")` (disabled by default, requires type resolution)
+
 - and others...
 
 Rules can be individually turned `on` or `off` in the configuration file.  
@@ -116,6 +118,8 @@ compose:
     active: true
     # functions whose "model" argument is checked
     imageFunctions: [ 'AsyncImage', 'SubcomposeAsyncImage', 'rememberAsyncImagePainter' ]
+  UnnecessaryModifierArgument:
+    active: true
 ```
 
 ## Detekt configuration for Compose
