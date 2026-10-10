@@ -118,10 +118,9 @@ class ConditionCouldBeLiftedAnalyzer(
     if (semantic.explicitArgumentParameterNames(this).any { it in options.ignoreCallsWithArgumentNames }) return null
 
     // not every composable with a single composable lambda has "content" semantics, so only that name is checked
-    val contentParameterName = semantic.firstComposableLambdaParameterName(
-      this,
-      options.composableAnnotationClassPackage,
-    )
+    val contentParameterName = semantic.composableLambdaParameters(this, options.composableAnnotationClassPackage)
+      .firstOrNull()
+      ?.name
     if (contentParameterName != "content") return null
 
     return semantic.argumentForParameterNamed(this, contentParameterName) as? KtLambdaExpression
