@@ -17,6 +17,7 @@ class NoTypeResolutionTest : ShouldSpec({
     "ConditionCouldBeLifted" to { ConditionCouldBeLifted() },
     "ReusedModifierInstance" to { ReusedModifierInstance() },
     "UnnecessaryEventHandlerParameter" to { UnnecessaryEventHandlerParameter() },
+    "StateReadCouldBeLowered" to { StateReadCouldBeLowered() },
   )
 
   SharedRuleContracts.heavyParityCases.forEach { parityCase ->

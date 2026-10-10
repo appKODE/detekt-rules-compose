@@ -32,3 +32,6 @@ compose:
     ignoreCallsWithArgumentNames: [ 'modifier' ]
   UnnecessaryLayoutWrapper:
     active: false
+  StateReadCouldBeLowered:
+    active: false
+    minDepth: 2

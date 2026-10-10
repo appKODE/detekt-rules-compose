@@ -30,6 +30,8 @@ Here are some highlights of rules in this rule set:
 
 - `UnnecessaryLayoutWrapper` finds a `Box`, `Column` or `Row` without parameters which only wraps a single `Box`, `Column` or `Row`, so the child can usually be used directly (disabled by default)
 
+- `StateReadCouldBeLowered` finds a `val` holding a state read (`.value` of a `State` or `.current` of a `CompositionLocal`) which is only used `minDepth` (default 2) or more composable lambdas deeper, so the state can be read closer to its use. Every composable lambda parameter counts (`content`, `topBar`, ...), except the ones of inline composables like `Box`, `Column` and `Row`: an inlined lambda is no recomposition scope of its own. A `crossinline` lambda, like the `itemContent` of the lazy list `items`, does count (disabled by default, requires type resolution)
+
 - and others...
 
 Rules can be individually turned `on` or `off` in the configuration file.  
@@ -88,6 +90,9 @@ compose:
     ignoreCallsWithArgumentNames: [ 'modifier', 'contentAlignment' ]
   UnnecessaryLayoutWrapper:
     active: true
+  StateReadCouldBeLowered:
+    active: true
+    minDepth: 2
 ```
 
 ## Detekt configuration for Compose

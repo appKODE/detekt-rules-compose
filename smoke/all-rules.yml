@@ -24,3 +24,5 @@ compose:
     active: true
   UnnecessaryLayoutWrapper:
     active: true
+  StateReadCouldBeLowered:
+    active: true

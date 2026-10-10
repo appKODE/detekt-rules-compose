@@ -31,6 +31,7 @@ object SharedRuleContracts {
     "ComposableFunctionName",
     "ConditionCouldBeLifted",
     "UnnecessaryLayoutWrapper",
+    "StateReadCouldBeLowered",
   )
 
   val allCases: List<RuleContractCase> = listOf(
@@ -185,6 +186,25 @@ object SharedRuleContracts {
       expectedCount = 1,
       expectedMessageContains = listOf("wraps a single \"Row\""),
     ),
+    RuleContractCase(
+      ruleId = "StateReadCouldBeLowered",
+      code =
+      """
+        class State<T>(val value: T)
+
+        @Composable
+        fun Lowered(state: State<Boolean>) {
+          val visible = state.value
+          Box {
+            Column {
+              if (visible) Text(text = "shown")
+            }
+          }
+        }
+      """.trimIndent(),
+      expectedCount = 1,
+      expectedMessageContains = listOf("is only used inside the content of \"Column\""),
+    ),
   )
 
   val heavyParityCases: List<HeavyRuleParityCase> = listOf(
@@ -250,6 +270,26 @@ object SharedRuleContracts {
         fun Modifier.onShown(extraKeys: Int, percent: Float, onShown: () -> Unit): Modifier = this
       """.trimIndent(),
       expectedMessages = emptyList(),
+    ),
+    HeavyRuleParityCase(
+      ruleId = "StateReadCouldBeLowered",
+      code =
+      """
+        class State<T>(val value: T)
+
+        @Composable
+        fun Lowered(state: State<Boolean>) {
+          val visible = state.value
+          Box {
+            Column {
+              if (visible) Text(text = "shown")
+            }
+          }
+        }
+      """.trimIndent(),
+      expectedMessages = listOf(
+        "\"visible\" is only used inside the content of \"Column\". Read the state there instead",
+      ),
     ),
   )
 }
