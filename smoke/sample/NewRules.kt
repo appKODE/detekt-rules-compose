@@ -19,6 +19,13 @@ fun LoweredRead(visible: State<Boolean>, title: String) {
   }
 }
 
+data class Profile(val name: String)
+
+@Composable
+fun ProfileCard(profile: Profile) {
+  Text(profile.name)
+}
+
 // The cases below need the callee, the type arguments and the receivers to be resolved.
 @Composable
 inline fun Items(crossinline itemContent: @Composable () -> Unit) {
@@ -35,4 +42,9 @@ fun LoweredIntoItem(visible: State<Boolean>, title: String) {
       Text("b")
     }
   }
+}
+
+@Composable
+fun ProfileList(profiles: List<Profile>) {
+  Text(profiles.size.toString())
 }

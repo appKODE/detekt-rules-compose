@@ -32,6 +32,8 @@ Here are some highlights of rules in this rule set:
 
 - `StateReadCouldBeLowered` finds a `val` holding a state read (`.value` of a `State` or `.current` of a `CompositionLocal`) which is only used `minDepth` (default 2) or more composable lambdas deeper, so the state can be read closer to its use. Every composable lambda parameter counts (`content`, `topBar`, ...), except the ones of inline composables like `Box`, `Column` and `Row`: an inlined lambda is no recomposition scope of its own. A `crossinline` lambda, like the `itemContent` of the lazy list `items`, does count (disabled by default, requires type resolution)
 
+- `NonImmutableDataClassParameter` finds a composable parameter whose type, or one of its type arguments (`List<Profile>`), is a data class not marked with `@Immutable` or `@Stable`. With strong skipping (the default since Kotlin 2.0.20) such a composable is still skippable, but the parameter is compared by instance (`===`) instead of `equals()`, so an equal copy of the data class recomposes it. Not reported: data classes of the `kotlin` package, data classes of libraries which the Compose compiler knows to be stable at compile time (`@StabilityInferred`), `ignoredPackageSegments` and `stableTypePatterns`. `stableTypePatterns` takes the lines of the Compose stability configuration file, comment lines included; a line which the Compose compiler would reject fails the run. Limits: a library data class which holds a class of another file or module is still reported, the Compose compiler decides on its stability only at runtime, list it in `stableTypePatterns`; a pattern is not matched against the supertypes of a class; only data classes are judged, so an unstable `List`, Java collection or extension receiver is not reported, and a `List<Profile>` parameter stays unstable for the Compose compiler even when `Profile` is annotated (disabled by default, requires type resolution)
+
 - and others...
 
 Rules can be individually turned `on` or `off` in the configuration file.  
@@ -93,6 +95,13 @@ compose:
   StateReadCouldBeLowered:
     active: true
     minDepth: 2
+  NonImmutableDataClassParameter:
+    active: true
+    # data classes of packages with these segments are not reported, for example [ 'schema' ]
+    ignoredPackageSegments: [ ]
+    # data classes which are stable without an annotation, in the syntax of the Compose stability configuration file
+    # (copy its lines here, the rule can't locate the file), for example [ 'com.example.model.**', 'java.time.*' ]
+    stableTypePatterns: [ ]
 ```
 
 ## Detekt configuration for Compose

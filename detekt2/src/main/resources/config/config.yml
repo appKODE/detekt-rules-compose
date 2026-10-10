@@ -35,3 +35,7 @@ compose:
   StateReadCouldBeLowered:
     active: false
     minDepth: 2
+  NonImmutableDataClassParameter:
+    active: false
+    ignoredPackageSegments: [ ]
+    stableTypePatterns: [ ]

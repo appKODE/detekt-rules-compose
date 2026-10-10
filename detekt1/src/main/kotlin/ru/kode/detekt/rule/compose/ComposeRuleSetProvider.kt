@@ -24,6 +24,7 @@ class ComposeRuleSetProvider : RuleSetProvider {
         ConditionCouldBeLifted(config),
         UnnecessaryLayoutWrapper(config),
         StateReadCouldBeLowered(config),
+        NonImmutableDataClassParameter(config),
       ),
     )
   }

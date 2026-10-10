@@ -26,3 +26,5 @@ compose:
     active: true
   StateReadCouldBeLowered:
     active: true
+  NonImmutableDataClassParameter:
+    active: true

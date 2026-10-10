@@ -24,6 +24,7 @@ class HeavyRuleParityTest : ShouldSpec({
         is ReusedModifierInstance -> rule.lintWithContext(environment, composeSnippet(parityCase.code))
         is UnnecessaryEventHandlerParameter -> rule.lintWithContext(environment, composeSnippet(parityCase.code))
         is StateReadCouldBeLowered -> rule.lintWithContext(environment, composeSnippet(parityCase.code))
+        is NonImmutableDataClassParameter -> rule.lintWithContext(environment, composeSnippet(parityCase.code))
         else -> error("Unexpected heavy rule type: ${rule::class.simpleName}")
       }
       findings.map { it.message } shouldBe parityCase.expectedMessages
@@ -38,6 +39,7 @@ class HeavyRuleParityTest : ShouldSpec({
         is ReusedModifierInstance -> rule.lintWithContext(environment, parityCase.code)
         is UnnecessaryEventHandlerParameter -> rule.lintWithContext(environment, parityCase.code)
         is StateReadCouldBeLowered -> rule.lintWithContext(environment, parityCase.code)
+        is NonImmutableDataClassParameter -> rule.lintWithContext(environment, parityCase.code)
         else -> error("Unexpected heavy rule type: ${rule::class.simpleName}")
       }
       findings shouldHaveSize parityCase.expectedUnresolvedFindings
@@ -63,6 +65,8 @@ private fun createHeavyRule(parityCase: HeavyRuleParityCase): Rule {
       config = Config.empty,
       composableAnnotationClassPackage = TEST_COMPOSE_PACKAGE,
     )
+
+    "NonImmutableDataClassParameter" -> NonImmutableDataClassParameter(Config.empty)
 
     else -> error("Unknown heavy rule id: ${parityCase.ruleId}")
   }

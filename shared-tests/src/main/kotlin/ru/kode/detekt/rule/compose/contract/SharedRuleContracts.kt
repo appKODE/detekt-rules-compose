@@ -12,8 +12,10 @@ data class HeavyRuleParityCase(
   val ruleId: String,
   val code: String,
   val expectedMessages: List<String>,
-  /** Findings when nothing resolves: unresolved symbols, or detekt1 without type resolution. */
+  /** Findings when the code is linted without the fake Compose declarations, so their symbols are unresolved. */
   val expectedUnresolvedFindings: Int = 0,
+  /** Findings of detekt1 without type resolution, when nothing resolves at all. */
+  val expectedNoTypeResolutionFindings: Int = expectedUnresolvedFindings,
   val name: String = ruleId,
 )
 
@@ -32,6 +34,7 @@ object SharedRuleContracts {
     "ConditionCouldBeLifted",
     "UnnecessaryLayoutWrapper",
     "StateReadCouldBeLowered",
+    "NonImmutableDataClassParameter",
   )
 
   val allCases: List<RuleContractCase> = listOf(
@@ -205,6 +208,20 @@ object SharedRuleContracts {
       expectedCount = 1,
       expectedMessageContains = listOf("is only used inside the content of \"Column\""),
     ),
+    RuleContractCase(
+      ruleId = "NonImmutableDataClassParameter",
+      code =
+      """
+        data class Profile(val name: String)
+
+        @Composable
+        fun ProfileCard(profile: Profile) {
+          Text(text = profile.name)
+        }
+      """.trimIndent(),
+      expectedCount = 1,
+      expectedMessageContains = listOf("is a data class \"Profile\""),
+    ),
   )
 
   val heavyParityCases: List<HeavyRuleParityCase> = listOf(
@@ -290,6 +307,24 @@ object SharedRuleContracts {
       expectedMessages = listOf(
         "\"visible\" is only used inside the content of \"Column\". Read the state there instead",
       ),
+    ),
+    HeavyRuleParityCase(
+      ruleId = "NonImmutableDataClassParameter",
+      code =
+      """
+        data class Profile(val name: String)
+
+        @Composable
+        fun ProfileCard(profile: Profile, missing: Missing) {
+          Text(text = profile.name)
+        }
+      """.trimIndent(),
+      expectedMessages = listOf(
+        "Parameter \"profile\" is a data class \"Profile\" which is not marked with @Immutable or @Stable",
+      ),
+      // the data class resolves without the fake Compose declarations too, "Missing" never does
+      expectedUnresolvedFindings = 1,
+      expectedNoTypeResolutionFindings = 0,
     ),
   )
 }
