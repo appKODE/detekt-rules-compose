@@ -36,6 +36,8 @@ Here are some highlights of rules in this rule set:
 
 - `PartiallyUsedViewState` finds a composable which takes a whole view state (a class matching `stateClassPattern`) but reads fewer than `usedFieldsThreshold` (default 3) of its properties, such a composable should take the properties instead. Only public and internal properties are counted. Reads inside `with(state) {}`, `state.run {}` and `state.apply {}`, through a destructuring declaration and of inherited properties are counted; `state.let {}` and `state.also {}` pass the state on, a composable which reads the state only through them is not reported (disabled by default, requires type resolution)
 
+- `UnwrappedValueClassImageModel` finds a value class passed as is to the `model` of a Coil image function or to the `data` of an `ImageRequest` builder: it compiles because the parameter is `Any?`, but Coil can't load an image from a boxed value class, pass its `.value` instead. Value classes of the `kotlin` package (`UInt`, `Result`) are not reported (disabled by default, requires type resolution)
+
 - and others...
 
 Rules can be individually turned `on` or `off` in the configuration file.  
@@ -110,6 +112,10 @@ compose:
     stateClassPattern: '.*ViewState'
     # a state with fewer read properties is reported, classes with fewer properties are not checked
     usedFieldsThreshold: 3
+  UnwrappedValueClassImageModel:
+    active: true
+    # functions whose "model" argument is checked
+    imageFunctions: [ 'AsyncImage', 'SubcomposeAsyncImage', 'rememberAsyncImagePainter' ]
 ```
 
 ## Detekt configuration for Compose

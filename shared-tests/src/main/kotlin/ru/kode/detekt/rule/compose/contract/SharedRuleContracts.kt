@@ -36,6 +36,7 @@ object SharedRuleContracts {
     "StateReadCouldBeLowered",
     "NonImmutableDataClassParameter",
     "PartiallyUsedViewState",
+    "UnwrappedValueClassImageModel",
   )
 
   val allCases: List<RuleContractCase> = listOf(
@@ -237,6 +238,23 @@ object SharedRuleContracts {
       expectedCount = 1,
       expectedMessageContains = listOf("reads only 1 of 3 \"HeaderViewState\" properties"),
     ),
+    RuleContractCase(
+      ruleId = "UnwrappedValueClassImageModel",
+      code =
+      """
+        @JvmInline
+        value class ImageUrl(val value: String)
+
+        fun AsyncImage(model: Any?) {}
+
+        @Composable
+        fun Avatar(avatarUrl: ImageUrl) {
+          AsyncImage(model = avatarUrl)
+        }
+      """.trimIndent(),
+      expectedCount = 1,
+      expectedMessageContains = listOf("\"avatarUrl\" is a value class"),
+    ),
   )
 
   val heavyParityCases: List<HeavyRuleParityCase> = listOf(
@@ -361,6 +379,28 @@ object SharedRuleContracts {
         "Parameter \"state\" reads only 1 of 3 \"HeaderViewState\" properties (title). Pass them instead of the whole state",
       ),
       // the state class resolves without the fake Compose declarations too, "MissingViewState" never does
+      expectedUnresolvedFindings = 1,
+      expectedNoTypeResolutionFindings = 0,
+    ),
+    HeavyRuleParityCase(
+      ruleId = "UnwrappedValueClassImageModel",
+      code =
+      """
+        @JvmInline
+        value class ImageUrl(val value: String)
+
+        fun AsyncImage(model: Any?) {}
+
+        @Composable
+        fun Avatar(avatarUrl: ImageUrl, missing: Missing) {
+          AsyncImage(model = avatarUrl)
+          AsyncImage(model = missing)
+        }
+      """.trimIndent(),
+      expectedMessages = listOf(
+        "\"avatarUrl\" is a value class, Coil can't load an image from it. Pass its underlying value instead",
+      ),
+      // the value class resolves without the fake Compose declarations too, "Missing" never does
       expectedUnresolvedFindings = 1,
       expectedNoTypeResolutionFindings = 0,
     ),

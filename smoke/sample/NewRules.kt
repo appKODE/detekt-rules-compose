@@ -33,6 +33,17 @@ fun Header(state: HeaderViewState) {
   Text(state.title)
 }
 
+@JvmInline
+value class ImageUrl(val value: String)
+
+fun AsyncImage(model: Any?) {}
+
+@Composable
+fun Avatar(url: ImageUrl) {
+  AsyncImage(model = url)
+  AsyncImage(model = url.value)
+}
+
 // The cases below need the callee, the type arguments and the receivers to be resolved.
 @Composable
 inline fun Items(crossinline itemContent: @Composable () -> Unit) {

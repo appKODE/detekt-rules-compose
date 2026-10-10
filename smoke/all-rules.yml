@@ -30,3 +30,5 @@ compose:
     active: true
   PartiallyUsedViewState:
     active: true
+  UnwrappedValueClassImageModel:
+    active: true

@@ -28,6 +28,7 @@ class SharedRuleContractsTest : ShouldSpec({
     is StateReadCouldBeLowered -> rule.lintWithContext(environment, code)
     is NonImmutableDataClassParameter -> rule.lintWithContext(environment, code)
     is PartiallyUsedViewState -> rule.lintWithContext(environment, code)
+    is UnwrappedValueClassImageModel -> rule.lintWithContext(environment, code)
     else -> rule.lint(code)
   }
 
@@ -128,6 +129,10 @@ private val expectedFindings = mapOf(
     "state: HeaderViewState" to
       "Parameter \"state\" reads only 1 of 3 \"HeaderViewState\" properties (title). Pass them instead of the whole state"
     ),
+  "UnwrappedValueClassImageModel" to (
+    "avatarUrl)" to
+      "\"avatarUrl\" is a value class, Coil can't load an image from it. Pass its underlying value instead"
+    ),
 )
 
 private fun createRule(contract: RuleContractCase): Rule {
@@ -175,6 +180,8 @@ private fun createRule(contract: RuleContractCase): Rule {
     "NonImmutableDataClassParameter" -> NonImmutableDataClassParameter(config)
 
     "PartiallyUsedViewState" -> PartiallyUsedViewState(config)
+
+    "UnwrappedValueClassImageModel" -> UnwrappedValueClassImageModel(config)
 
     else -> error("Unknown rule id: ${contract.ruleId}")
   }

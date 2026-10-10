@@ -43,3 +43,6 @@ compose:
     active: false
     stateClassPattern: '.*ViewState'
     usedFieldsThreshold: 3
+  UnwrappedValueClassImageModel:
+    active: false
+    imageFunctions: [ 'AsyncImage', 'SubcomposeAsyncImage', 'rememberAsyncImagePainter' ]

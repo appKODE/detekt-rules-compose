@@ -21,6 +21,7 @@ class NoTypeResolutionTest : ShouldSpec({
     "StateReadCouldBeLowered" to { StateReadCouldBeLowered(composableAnnotationClassPackage = TEST_COMPOSE_PACKAGE) },
     "NonImmutableDataClassParameter" to { NonImmutableDataClassParameter() },
     "PartiallyUsedViewState" to { PartiallyUsedViewState() },
+    "UnwrappedValueClassImageModel" to { UnwrappedValueClassImageModel() },
   )
 
   SharedRuleContracts.heavyParityCases.forEach { parityCase ->
