@@ -1,6 +1,6 @@
 # Changelog
 
-## 2.2.0
+## 2.2.0 - 2026-11-09
 
 ### Upgrading from 2.1.2
 
