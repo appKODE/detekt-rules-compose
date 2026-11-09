@@ -32,3 +32,19 @@ compose:
     ignoreCallsWithArgumentNames: [ 'modifier' ]
   UnnecessaryLayoutWrapper:
     active: false
+  StateReadCouldBeLowered:
+    active: false
+    minDepth: 2
+  NonImmutableDataClassParameter:
+    active: false
+    ignoredPackageSegments: [ ]
+    stableTypePatterns: [ ]
+  PartiallyUsedViewState:
+    active: false
+    stateClassPattern: '.*ViewState'
+    usedFieldsThreshold: 3
+  UnwrappedValueClassImageModel:
+    active: false
+    imageFunctions: [ 'AsyncImage', 'SubcomposeAsyncImage', 'rememberAsyncImagePainter' ]
+  UnnecessaryModifierArgument:
+    active: false

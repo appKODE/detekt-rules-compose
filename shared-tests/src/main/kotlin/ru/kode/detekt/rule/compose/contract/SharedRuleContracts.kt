@@ -12,8 +12,10 @@ data class HeavyRuleParityCase(
   val ruleId: String,
   val code: String,
   val expectedMessages: List<String>,
-  /** Findings when nothing resolves: unresolved symbols, or detekt1 without type resolution. */
+  /** Findings when the code is linted without the fake Compose declarations, so their symbols are unresolved. */
   val expectedUnresolvedFindings: Int = 0,
+  /** Findings of detekt1 without type resolution, when nothing resolves at all. */
+  val expectedNoTypeResolutionFindings: Int = expectedUnresolvedFindings,
   val name: String = ruleId,
 )
 
@@ -31,6 +33,11 @@ object SharedRuleContracts {
     "ComposableFunctionName",
     "ConditionCouldBeLifted",
     "UnnecessaryLayoutWrapper",
+    "StateReadCouldBeLowered",
+    "NonImmutableDataClassParameter",
+    "PartiallyUsedViewState",
+    "UnwrappedValueClassImageModel",
+    "UnnecessaryModifierArgument",
   )
 
   val allCases: List<RuleContractCase> = listOf(
@@ -185,6 +192,82 @@ object SharedRuleContracts {
       expectedCount = 1,
       expectedMessageContains = listOf("wraps a single \"Row\""),
     ),
+    RuleContractCase(
+      ruleId = "StateReadCouldBeLowered",
+      code =
+      """
+        class State<T>(val value: T)
+
+        @Composable
+        fun Lowered(state: State<Boolean>) {
+          val visible = state.value
+          Box {
+            Column {
+              if (visible) Text(text = "shown")
+            }
+          }
+        }
+      """.trimIndent(),
+      expectedCount = 1,
+      expectedMessageContains = listOf("is only used inside the content of \"Column\""),
+    ),
+    RuleContractCase(
+      ruleId = "NonImmutableDataClassParameter",
+      code =
+      """
+        data class Profile(val name: String)
+
+        @Composable
+        fun ProfileCard(profile: Profile) {
+          Text(text = profile.name)
+        }
+      """.trimIndent(),
+      expectedCount = 1,
+      expectedMessageContains = listOf("is a data class \"Profile\""),
+    ),
+    RuleContractCase(
+      ruleId = "PartiallyUsedViewState",
+      code =
+      """
+        data class HeaderViewState(val title: String, val subtitle: String, val count: Int)
+
+        @Composable
+        fun Header(state: HeaderViewState) {
+          Text(text = state.title)
+        }
+      """.trimIndent(),
+      expectedCount = 1,
+      expectedMessageContains = listOf("reads only 1 of 3 \"HeaderViewState\" properties"),
+    ),
+    RuleContractCase(
+      ruleId = "UnwrappedValueClassImageModel",
+      code =
+      """
+        @JvmInline
+        value class ImageUrl(val value: String)
+
+        fun AsyncImage(model: Any?) {}
+
+        @Composable
+        fun Avatar(avatarUrl: ImageUrl) {
+          AsyncImage(model = avatarUrl)
+        }
+      """.trimIndent(),
+      expectedCount = 1,
+      expectedMessageContains = listOf("\"avatarUrl\" is a value class"),
+    ),
+    RuleContractCase(
+      ruleId = "UnnecessaryModifierArgument",
+      code =
+      """
+        @Composable
+        fun Greeting() {
+          Text("Hello", Modifier)
+        }
+      """.trimIndent(),
+      expectedCount = 1,
+      expectedMessageContains = listOf("is the default value of the \"modifier\" parameter"),
+    ),
   )
 
   val heavyParityCases: List<HeavyRuleParityCase> = listOf(
@@ -250,6 +333,104 @@ object SharedRuleContracts {
         fun Modifier.onShown(extraKeys: Int, percent: Float, onShown: () -> Unit): Modifier = this
       """.trimIndent(),
       expectedMessages = emptyList(),
+    ),
+    HeavyRuleParityCase(
+      ruleId = "StateReadCouldBeLowered",
+      code =
+      """
+        class State<T>(val value: T)
+
+        @Composable
+        fun Lowered(state: State<Boolean>) {
+          val visible = state.value
+          Box {
+            Column {
+              if (visible) Text(text = "shown")
+            }
+          }
+        }
+      """.trimIndent(),
+      expectedMessages = listOf(
+        "\"visible\" is only used inside the content of \"Column\". Read the state there instead",
+      ),
+    ),
+    HeavyRuleParityCase(
+      ruleId = "NonImmutableDataClassParameter",
+      code =
+      """
+        data class Profile(val name: String)
+
+        @Composable
+        fun ProfileCard(profile: Profile, missing: Missing) {
+          Text(text = profile.name)
+        }
+      """.trimIndent(),
+      expectedMessages = listOf(
+        "Parameter \"profile\" is a data class \"Profile\" which is not marked with @Immutable or @Stable",
+      ),
+      // the data class resolves without the fake Compose declarations too, "Missing" never does
+      expectedUnresolvedFindings = 1,
+      expectedNoTypeResolutionFindings = 0,
+    ),
+    HeavyRuleParityCase(
+      ruleId = "PartiallyUsedViewState",
+      code =
+      """
+        data class HeaderViewState(val title: String, val subtitle: String, val count: Int)
+
+        @Composable
+        fun Header(state: HeaderViewState) {
+          Text(text = state.title)
+        }
+
+        @Composable
+        fun Footer(state: MissingViewState) {
+          Text(text = state.title)
+        }
+      """.trimIndent(),
+      expectedMessages = listOf(
+        "Parameter \"state\" reads only 1 of 3 \"HeaderViewState\" properties (title). Pass them instead of the whole state",
+      ),
+      // the state class resolves without the fake Compose declarations too, "MissingViewState" never does
+      expectedUnresolvedFindings = 1,
+      expectedNoTypeResolutionFindings = 0,
+    ),
+    HeavyRuleParityCase(
+      ruleId = "UnwrappedValueClassImageModel",
+      code =
+      """
+        @JvmInline
+        value class ImageUrl(val value: String)
+
+        fun AsyncImage(model: Any?) {}
+
+        @Composable
+        fun Avatar(avatarUrl: ImageUrl, missing: Missing) {
+          AsyncImage(model = avatarUrl)
+          AsyncImage(model = missing)
+        }
+      """.trimIndent(),
+      expectedMessages = listOf(
+        "\"avatarUrl\" is a value class, Coil can't load an image from it. Pass its underlying value instead",
+      ),
+      // the value class resolves without the fake Compose declarations too, "Missing" never does
+      expectedUnresolvedFindings = 1,
+      expectedNoTypeResolutionFindings = 0,
+    ),
+    HeavyRuleParityCase(
+      ruleId = "UnnecessaryModifierArgument",
+      code =
+      """
+        @Composable
+        fun Greeting() {
+          Text("Hello", Modifier)
+          Text("Hello", modifier = Modifier.fillMaxSize())
+          Missing("Hello", Modifier)
+        }
+      """.trimIndent(),
+      expectedMessages = listOf(
+        "\"Modifier\" is the default value of the \"modifier\" parameter of \"Text\". Remove the argument",
+      ),
     ),
   )
 }

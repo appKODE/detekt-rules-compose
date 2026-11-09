@@ -25,6 +25,11 @@ class SharedRuleContractsTest : ShouldSpec({
     is ConditionCouldBeLifted -> rule.lintWithContext(environment, code)
     is ReusedModifierInstance -> rule.lintWithContext(environment, code)
     is UnnecessaryEventHandlerParameter -> rule.lintWithContext(environment, code)
+    is StateReadCouldBeLowered -> rule.lintWithContext(environment, code)
+    is NonImmutableDataClassParameter -> rule.lintWithContext(environment, code)
+    is PartiallyUsedViewState -> rule.lintWithContext(environment, code)
+    is UnwrappedValueClassImageModel -> rule.lintWithContext(environment, code)
+    is UnnecessaryModifierArgument -> rule.lintWithContext(environment, code)
     else -> rule.lint(code)
   }
 
@@ -113,6 +118,26 @@ private val expectedFindings = mapOf(
     "Box {" to
       "\"Box\" has no parameters and wraps a single \"Row\", it is likely unnecessary"
     ),
+  "StateReadCouldBeLowered" to (
+    "visible = state.value" to
+      "\"visible\" is only used inside the content of \"Column\". Read the state there instead"
+    ),
+  "NonImmutableDataClassParameter" to (
+    "profile: Profile" to
+      "Parameter \"profile\" is a data class \"Profile\" which is not marked with @Immutable or @Stable"
+    ),
+  "PartiallyUsedViewState" to (
+    "state: HeaderViewState" to
+      "Parameter \"state\" reads only 1 of 3 \"HeaderViewState\" properties (title). Pass them instead of the whole state"
+    ),
+  "UnwrappedValueClassImageModel" to (
+    "avatarUrl)" to
+      "\"avatarUrl\" is a value class, Coil can't load an image from it. Pass its underlying value instead"
+    ),
+  "UnnecessaryModifierArgument" to (
+    "Modifier)\n}" to
+      "\"Modifier\" is the default value of the \"modifier\" parameter of \"Text\". Remove the argument"
+    ),
 )
 
 private fun createRule(contract: RuleContractCase): Rule {
@@ -151,6 +176,19 @@ private fun createRule(contract: RuleContractCase): Rule {
     "UnnecessaryEventHandlerParameter" -> UnnecessaryEventHandlerParameter(config)
 
     "UnnecessaryLayoutWrapper" -> UnnecessaryLayoutWrapper(config)
+
+    "StateReadCouldBeLowered" -> StateReadCouldBeLowered(
+      config = config,
+      composableAnnotationClassPackage = TEST_COMPOSE_PACKAGE,
+    )
+
+    "NonImmutableDataClassParameter" -> NonImmutableDataClassParameter(config)
+
+    "PartiallyUsedViewState" -> PartiallyUsedViewState(config)
+
+    "UnwrappedValueClassImageModel" -> UnwrappedValueClassImageModel(config)
+
+    "UnnecessaryModifierArgument" -> UnnecessaryModifierArgument(config, modifierClassPackage = TEST_COMPOSE_PACKAGE)
 
     else -> error("Unknown rule id: ${contract.ruleId}")
   }

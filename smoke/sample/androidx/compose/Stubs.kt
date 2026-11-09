@@ -8,3 +8,5 @@ package androidx.compose.runtime
   AnnotationTarget.PROPERTY_GETTER,
 )
 annotation class Composable
+
+class State<T>(val value: T)

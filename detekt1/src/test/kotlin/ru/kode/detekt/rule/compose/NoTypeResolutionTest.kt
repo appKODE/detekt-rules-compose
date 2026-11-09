@@ -18,13 +18,18 @@ class NoTypeResolutionTest : ShouldSpec({
     "ConditionCouldBeLifted" to { ConditionCouldBeLifted(composableAnnotationClassPackage = TEST_COMPOSE_PACKAGE) },
     "ReusedModifierInstance" to { ReusedModifierInstance(modifierClassPackage = TEST_COMPOSE_PACKAGE) },
     "UnnecessaryEventHandlerParameter" to { UnnecessaryEventHandlerParameter() },
+    "StateReadCouldBeLowered" to { StateReadCouldBeLowered(composableAnnotationClassPackage = TEST_COMPOSE_PACKAGE) },
+    "NonImmutableDataClassParameter" to { NonImmutableDataClassParameter() },
+    "PartiallyUsedViewState" to { PartiallyUsedViewState() },
+    "UnwrappedValueClassImageModel" to { UnwrappedValueClassImageModel() },
+    "UnnecessaryModifierArgument" to { UnnecessaryModifierArgument(modifierClassPackage = TEST_COMPOSE_PACKAGE) },
   )
 
   SharedRuleContracts.heavyParityCases.forEach { parityCase ->
     should("not crash without type resolution: ${parityCase.name}") {
       val findings = rules.getValue(parityCase.ruleId)().lint(composeSnippet(parityCase.code))
 
-      findings shouldHaveSize parityCase.expectedUnresolvedFindings
+      findings shouldHaveSize parityCase.expectedNoTypeResolutionFindings
     }
   }
 

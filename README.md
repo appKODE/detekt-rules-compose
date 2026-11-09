@@ -30,6 +30,16 @@ Here are some highlights of rules in this rule set:
 
 - `UnnecessaryLayoutWrapper` finds a `Box`, `Column` or `Row` without parameters which only wraps a single `Box`, `Column` or `Row`, so the child can usually be used directly (disabled by default)
 
+- `StateReadCouldBeLowered` finds a `val` holding a state read (`.value` of a `State` or `.current` of a `CompositionLocal`) which is only used `minDepth` (default 2) or more composable lambdas deeper, so the state can be read closer to its use. Every composable lambda parameter counts (`content`, `topBar`, ...), except the ones of inline composables like `Box`, `Column` and `Row`: an inlined lambda is no recomposition scope of its own. A `crossinline` lambda, like the `itemContent` of the lazy list `items`, does count (disabled by default, requires type resolution)
+
+- `NonImmutableDataClassParameter` finds a composable parameter whose type, or one of its type arguments (`List<Profile>`), is a data class not marked with `@Immutable` or `@Stable`. With strong skipping (the default since Kotlin 2.0.20) such a composable is still skippable, but the parameter is compared by instance (`===`) instead of `equals()`, so an equal copy of the data class recomposes it. Not reported: data classes of the `kotlin` package, data classes of libraries which the Compose compiler knows to be stable at compile time (`@StabilityInferred`), `ignoredPackageSegments` and `stableTypePatterns`. `stableTypePatterns` takes the lines of the Compose stability configuration file, comment lines included; a line which the Compose compiler would reject fails the run. Limits: a library data class which holds a class of another file or module is still reported, the Compose compiler decides on its stability only at runtime, list it in `stableTypePatterns`; a pattern is not matched against the supertypes of a class; only data classes are judged, so an unstable `List`, Java collection or extension receiver is not reported, and a `List<Profile>` parameter stays unstable for the Compose compiler even when `Profile` is annotated (disabled by default, requires type resolution)
+
+- `PartiallyUsedViewState` finds a composable which takes a whole view state (a class matching `stateClassPattern`) but reads fewer than `usedFieldsThreshold` (default 3) of its properties, such a composable should take the properties instead. Only public and internal properties are counted. Reads inside `with(state) {}`, `state.run {}` and `state.apply {}`, through a destructuring declaration and of inherited properties are counted; `state.let {}` and `state.also {}` pass the state on, a composable which reads the state only through them is not reported (disabled by default, requires type resolution)
+
+- `UnwrappedValueClassImageModel` finds a value class passed as is to the `model` of a Coil image function or to the `data` of an `ImageRequest` builder: it compiles because the parameter is `Any?`, but Coil can't load an image from a boxed value class, pass its `.value` instead. Value classes of the `kotlin` package (`UInt`, `Result`) are not reported (disabled by default, requires type resolution)
+
+- `UnnecessaryModifierArgument` finds a `Modifier` passed to a parameter which already has `Modifier` as its default value (`Text("Hello", modifier = Modifier)`), the argument can be removed. Only functions declared in the analyzed sources are checked, the default value of a library function is not available. A positional argument followed by another positional one can't be removed alone, pass the following arguments by name then: `Card("Title", Modifier, false)` becomes `Card("Title", enabled = false)`. The rule does not check whether the call without the argument resolves to another overload, suppress the finding there with `@Suppress("UnnecessaryModifierArgument")` (disabled by default, requires type resolution)
+
 - and others...
 
 Rules can be individually turned `on` or `off` in the configuration file.  
@@ -87,6 +97,28 @@ compose:
     active: true
     ignoreCallsWithArgumentNames: [ 'modifier', 'contentAlignment' ]
   UnnecessaryLayoutWrapper:
+    active: true
+  StateReadCouldBeLowered:
+    active: true
+    minDepth: 2
+  NonImmutableDataClassParameter:
+    active: true
+    # data classes of packages with these segments are not reported, for example [ 'schema' ]
+    ignoredPackageSegments: [ ]
+    # data classes which are stable without an annotation, in the syntax of the Compose stability configuration file
+    # (copy its lines here, the rule can't locate the file), for example [ 'com.example.model.**', 'java.time.*' ]
+    stableTypePatterns: [ ]
+  PartiallyUsedViewState:
+    active: true
+    # regex for the name of a view state class
+    stateClassPattern: '.*ViewState'
+    # a state with fewer read properties is reported, classes with fewer properties are not checked
+    usedFieldsThreshold: 3
+  UnwrappedValueClassImageModel:
+    active: true
+    # functions whose "model" argument is checked
+    imageFunctions: [ 'AsyncImage', 'SubcomposeAsyncImage', 'rememberAsyncImagePainter' ]
+  UnnecessaryModifierArgument:
     active: true
 ```
 

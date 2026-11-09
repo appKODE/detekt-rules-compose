@@ -1,5 +1,37 @@
 # Changelog
 
+## 2.2.0 - 2026-11-09
+
+### Upgrading from 2.1.2
+
+No configuration change is needed. The five new rules are disabled by default, enable them in your detekt config.
+All of them need type resolution and report nothing without it.
+
+### Changes
+
+* New `StateReadCouldBeLowered` rule: reports a `val` holding a state read (`.value` of a `State` or `.current` of a
+  `CompositionLocal`) which is only used `minDepth` (default 2) or more composable lambdas deeper, so the
+  state can be read closer to its use. Every composable lambda parameter counts, except the ones of inline
+  composables (`Box`, `Column`, `Row`), whose lambdas are no recomposition scopes. A `crossinline` lambda, like the
+  `itemContent` of the lazy list `items`, does count
+* New `NonImmutableDataClassParameter` rule: reports a composable parameter whose type, or one of its type arguments,
+  is a data class which is not marked with `@Immutable` or `@Stable`. Data classes of the `kotlin` package and library
+  data classes which the Compose compiler knows to be stable at compile time are not reported, other classes can be
+  skipped with `ignoredPackageSegments` or with `stableTypePatterns`, which takes the lines of the Compose stability
+  configuration file (an invalid line fails the run)
+* New `PartiallyUsedViewState` rule: reports a composable which takes a whole view state (a class whose name matches
+  `stateClassPattern`, `.*ViewState` by default) but reads fewer than `usedFieldsThreshold` (default 3) of its
+  public or internal properties, the inherited ones and the ones read inside `with`/`run`/`apply` or by destructuring
+  included. A composable which uses the state as a whole (`state.let {}` too) is not reported, neither is one whose
+  signature is not its own (`override`, `open`, `abstract`, `expect`, `actual` or declared in an interface)
+* New `UnwrappedValueClassImageModel` rule: reports a value class passed as is to the `model` of a Coil image function
+  (`imageFunctions`) or to the `data` of an `ImageRequest` builder. It compiles because the parameter is `Any?`, but
+  Coil can't load an image from a boxed value class. Value classes of the `kotlin` package (`UInt`, `Result`) are not
+  reported
+* New `UnnecessaryModifierArgument` rule: reports a `Modifier` passed to a parameter which already has `Modifier` as
+  its default value (`Text("Hello", modifier = Modifier)`). Only functions declared in the analyzed sources are
+  checked, the default value of a library function is not available
+
 ## 2.1.2 - 2026-10-04
 
 ### Upgrading from 2.1.1

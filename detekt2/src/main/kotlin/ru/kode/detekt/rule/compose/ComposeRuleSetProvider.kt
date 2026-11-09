@@ -23,6 +23,11 @@ class ComposeRuleSetProvider : RuleSetProvider {
         { config -> ComposableFunctionName(config) },
         { config -> ConditionCouldBeLifted(config) },
         { config -> UnnecessaryLayoutWrapper(config) },
+        { config -> StateReadCouldBeLowered(config) },
+        { config -> NonImmutableDataClassParameter(config) },
+        { config -> PartiallyUsedViewState(config) },
+        { config -> UnwrappedValueClassImageModel(config) },
+        { config -> UnnecessaryModifierArgument(config) },
       ),
     )
   }

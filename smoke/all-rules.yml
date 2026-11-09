@@ -24,3 +24,13 @@ compose:
     active: true
   UnnecessaryLayoutWrapper:
     active: true
+  StateReadCouldBeLowered:
+    active: true
+  NonImmutableDataClassParameter:
+    active: true
+  PartiallyUsedViewState:
+    active: true
+  UnwrappedValueClassImageModel:
+    active: true
+  UnnecessaryModifierArgument:
+    active: true
